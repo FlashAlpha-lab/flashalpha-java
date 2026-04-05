@@ -111,6 +111,213 @@ public class ClientTest {
         assertTrue(bodyStr.contains("\"limit\":20"));
     }
 
+    @Test
+    public void testScreenerXApiKeyHeaderSent() throws Exception {
+        enqueueOk();
+        client.screener(new java.util.LinkedHashMap<>());
+        RecordedRequest req = server.takeRequest();
+        assertEquals(FAKE_KEY, req.getHeader("X-Api-Key"));
+        assertEquals("application/json", req.getHeader("Content-Type"));
+    }
+
+    @Test
+    public void testScreenerLeafFilter() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("filters", java.util.Map.of(
+                "field", "regime", "operator", "eq", "value", "positive_gamma"));
+        client.screener(body);
+        RecordedRequest req = server.takeRequest();
+        String s = req.getBody().readUtf8();
+        assertTrue(s.contains("\"field\":\"regime\""));
+        assertTrue(s.contains("\"operator\":\"eq\""));
+    }
+
+    @Test
+    public void testScreenerOrGroup() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("filters", java.util.Map.of(
+                "op", "or",
+                "conditions", java.util.List.of(
+                        java.util.Map.of("field", "vrp_regime", "operator", "eq", "value", "toxic_short_vol"),
+                        java.util.Map.of("field", "vrp_regime", "operator", "eq", "value", "event_only"))));
+        client.screener(body);
+        RecordedRequest req = server.takeRequest();
+        String s = req.getBody().readUtf8();
+        assertTrue(s.contains("\"op\":\"or\""));
+        assertTrue(s.contains("toxic_short_vol"));
+    }
+
+    @Test
+    public void testScreenerNestedAndInsideOr() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> andGroup1 = java.util.Map.of(
+                "op", "and",
+                "conditions", java.util.List.of(
+                        java.util.Map.of("field", "regime", "operator", "eq", "value", "positive_gamma"),
+                        java.util.Map.of("field", "harvest_score", "operator", "gte", "value", 70)));
+        java.util.Map<String, Object> andGroup2 = java.util.Map.of(
+                "op", "and",
+                "conditions", java.util.List.of(
+                        java.util.Map.of("field", "regime", "operator", "eq", "value", "negative_gamma"),
+                        java.util.Map.of("field", "atm_iv", "operator", "gte", "value", 50)));
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("filters", java.util.Map.of(
+                "op", "or",
+                "conditions", java.util.List.of(andGroup1, andGroup2)));
+        client.screener(body);
+        String s = server.takeRequest().getBody().readUtf8();
+        assertTrue(s.contains("\"op\":\"or\""));
+        assertTrue(s.contains("\"op\":\"and\""));
+        assertTrue(s.contains("positive_gamma"));
+        assertTrue(s.contains("negative_gamma"));
+    }
+
+    @Test
+    public void testScreenerBetweenOperator() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("filters", java.util.Map.of(
+                "field", "atm_iv", "operator", "between", "value", java.util.List.of(15, 25)));
+        client.screener(body);
+        String s = server.takeRequest().getBody().readUtf8();
+        assertTrue(s.contains("\"operator\":\"between\""));
+        assertTrue(s.contains("[15,25]"));
+    }
+
+    @Test
+    public void testScreenerInOperator() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("filters", java.util.Map.of(
+                "field", "term_state", "operator", "in",
+                "value", java.util.List.of("contango", "mixed")));
+        client.screener(body);
+        String s = server.takeRequest().getBody().readUtf8();
+        assertTrue(s.contains("\"operator\":\"in\""));
+        assertTrue(s.contains("contango"));
+    }
+
+    @Test
+    public void testScreenerIsNotNullOperator() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("filters", java.util.Map.of("field", "vrp_regime", "operator", "is_not_null"));
+        client.screener(body);
+        String s = server.takeRequest().getBody().readUtf8();
+        assertTrue(s.contains("\"operator\":\"is_not_null\""));
+    }
+
+    @Test
+    public void testScreenerCascadingFilters() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("filters", java.util.Map.of(
+                "op", "and",
+                "conditions", java.util.List.of(
+                        java.util.Map.of("field", "regime", "operator", "eq", "value", "positive_gamma"),
+                        java.util.Map.of("field", "expiries.days_to_expiry", "operator", "lte", "value", 14),
+                        java.util.Map.of("field", "strikes.call_oi", "operator", "gte", "value", 2000),
+                        java.util.Map.of("field", "contracts.type", "operator", "eq", "value", "C"))));
+        body.put("select", java.util.List.of("*"));
+        client.screener(body);
+        String s = server.takeRequest().getBody().readUtf8();
+        assertTrue(s.contains("expiries.days_to_expiry"));
+        assertTrue(s.contains("strikes.call_oi"));
+        assertTrue(s.contains("contracts.type"));
+    }
+
+    @Test
+    public void testScreenerFormulas() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("formulas", java.util.List.of(
+                java.util.Map.of("alias", "vrp_ratio", "expression", "atm_iv / rv_20d")));
+        body.put("filters", java.util.Map.of(
+                "formula", "vrp_ratio", "operator", "gte", "value", 1.2));
+        body.put("sort", java.util.List.of(
+                java.util.Map.of("formula", "vrp_ratio", "direction", "desc")));
+        client.screener(body);
+        String s = server.takeRequest().getBody().readUtf8();
+        assertTrue(s.contains("\"alias\":\"vrp_ratio\""));
+        assertTrue(s.contains("atm_iv / rv_20d"));
+        assertTrue(s.contains("\"formula\":\"vrp_ratio\""));
+    }
+
+    @Test
+    public void testScreenerMultiSort() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("sort", java.util.List.of(
+                java.util.Map.of("field", "dealer_flow_risk", "direction", "asc"),
+                java.util.Map.of("field", "harvest_score", "direction", "desc")));
+        client.screener(body);
+        String s = server.takeRequest().getBody().readUtf8();
+        assertTrue(s.contains("dealer_flow_risk"));
+        assertTrue(s.contains("\"direction\":\"asc\""));
+        assertTrue(s.contains("\"direction\":\"desc\""));
+    }
+
+    @Test
+    public void testScreenerPagination() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("limit", 10);
+        body.put("offset", 10);
+        client.screener(body);
+        String s = server.takeRequest().getBody().readUtf8();
+        assertTrue(s.contains("\"limit\":10"));
+        assertTrue(s.contains("\"offset\":10"));
+    }
+
+    @Test
+    public void testScreenerNegativeNumber() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("filters", java.util.Map.of(
+                "field", "net_gex", "operator", "lt", "value", -500000));
+        client.screener(body);
+        String s = server.takeRequest().getBody().readUtf8();
+        assertTrue(s.contains("-500000"));
+    }
+
+    @Test
+    public void testScreenerParsesResponse() throws Exception {
+        enqueue(200, "{\"meta\":{\"total_count\":7,\"tier\":\"alpha\",\"universe_size\":250},\"data\":[{\"symbol\":\"SPY\",\"price\":656.01}]}");
+        JsonObject result = client.screener(new java.util.LinkedHashMap<>());
+        assertEquals("alpha", result.getAsJsonObject("meta").get("tier").getAsString());
+        assertEquals(7, result.getAsJsonObject("meta").get("total_count").getAsInt());
+        assertEquals(656.01, result.getAsJsonArray("data").get(0).getAsJsonObject().get("price").getAsDouble(), 0.001);
+    }
+
+    @Test
+    public void testScreenerThrowsOn400ValidationError() throws Exception {
+        enqueue(400, "{\"status\":\"ERROR\",\"error\":\"validation_error\",\"message\":\"Field 'harvest_score' requires the Alpha plan or higher.\"}");
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("filters", java.util.Map.of(
+                "field", "harvest_score", "operator", "gte", "value", 65));
+        try {
+            client.screener(body);
+            fail("expected FlashAlphaException");
+        } catch (FlashAlphaException e) {
+            assertEquals(400, e.getStatusCode());
+            assertTrue(e.getMessage().contains("Alpha"));
+        }
+    }
+
+    @Test
+    public void testScreenerThrowsOn403TierRestricted() throws Exception {
+        enqueue(403, "{\"status\":\"ERROR\",\"error\":\"tier_restricted\",\"message\":\"Screener requires Growth plan.\",\"current_plan\":\"Free\",\"required_plan\":\"Growth\"}");
+        try {
+            client.screener(new java.util.LinkedHashMap<>());
+            fail("expected TierRestrictedException");
+        } catch (TierRestrictedException e) {
+            assertEquals("Free", e.getCurrentPlan());
+            assertEquals("Growth", e.getRequiredPlan());
+        }
+    }
+
     // ── Market data ────────────────────────────────────────────────────
 
     @Test
