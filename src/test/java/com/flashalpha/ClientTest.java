@@ -83,7 +83,7 @@ public class ClientTest {
         client.screener(new java.util.LinkedHashMap<>());
         RecordedRequest req = server.takeRequest();
         assertEquals("POST", req.getMethod());
-        assertEquals("/v1/screener/live", req.getPath());
+        assertEquals("/v1/screener", req.getPath());
         assertEquals("application/json", req.getHeader("Content-Type"));
     }
 

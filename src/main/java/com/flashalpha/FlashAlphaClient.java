@@ -614,7 +614,7 @@ public class FlashAlphaClient {
      *             Pass an empty map for the default universe.
      */
     public JsonObject screener(Map<String, Object> body) {
-        return post("/v1/screener/live", body != null ? body : new LinkedHashMap<>());
+        return post("/v1/screener", body != null ? body : new LinkedHashMap<>());
     }
 
     /**
@@ -622,7 +622,7 @@ public class FlashAlphaClient {
      * to pass a POJO or {@link com.google.gson.JsonObject}).
      */
     public JsonObject screener(Object body) {
-        return post("/v1/screener/live", body);
+        return post("/v1/screener", body);
     }
 
     // ── Account & System ──────────────────────────────────────────────
