@@ -108,6 +108,30 @@ public class FlashAlphaClient {
         return handleResponse(response);
     }
 
+    private JsonObject post(String path, Object body) {
+        String url = baseUrl + path;
+        String jsonBody = body != null ? gson.toJson(body) : "{}";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("X-Api-Key", apiKey)
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+                .timeout(DEFAULT_TIMEOUT)
+                .build();
+
+        HttpResponse<String> response;
+        try {
+            response = http.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new FlashAlphaException("HTTP request failed: " + e.getMessage(), 0, null);
+        }
+
+        return handleResponse(response);
+    }
+
     private JsonObject handleResponse(HttpResponse<String> response) {
         int status = response.statusCode();
         String body = response.body();
@@ -557,6 +581,48 @@ public class FlashAlphaClient {
      */
     public JsonObject symbols() {
         return get("/v1/symbols");
+    }
+
+    // ── Account & System ──────────────────────────────────────────────
+
+    // ── Screener ──────────────────────────────────────────────────────
+
+    /**
+     * Live options screener — filter and rank symbols by gamma exposure, VRP,
+     * volatility, greeks, and more. Powered by an in-memory store updated every
+     * 5-10s from live market data.
+     *
+     * <p>Growth: 10-symbol universe, up to 10 rows. Alpha: ~250 symbols, up to
+     * 50 rows, formulas, and harvest/dealer-flow-risk scores.
+     *
+     * <pre>{@code
+     * Map<String, Object> body = new LinkedHashMap<>();
+     * Map<String, Object> filters = new LinkedHashMap<>();
+     * filters.put("op", "and");
+     * filters.put("conditions", List.of(
+     *     Map.of("field", "regime", "operator", "eq", "value", "positive_gamma"),
+     *     Map.of("field", "harvest_score", "operator", "gte", "value", 65)
+     * ));
+     * body.put("filters", filters);
+     * body.put("sort", List.of(Map.of("field", "harvest_score", "direction", "desc")));
+     * body.put("select", List.of("symbol", "price", "harvest_score", "dealer_flow_risk"));
+     * JsonObject result = client.screener(body);
+     * }</pre>
+     *
+     * @param body Request body. See the Screener spec for the full schema:
+     *             {@code {filters, sort, select, formulas, limit, offset}}.
+     *             Pass an empty map for the default universe.
+     */
+    public JsonObject screener(Map<String, Object> body) {
+        return post("/v1/screener/live", body != null ? body : new LinkedHashMap<>());
+    }
+
+    /**
+     * Live options screener with a raw request object (for callers that want
+     * to pass a POJO or {@link com.google.gson.JsonObject}).
+     */
+    public JsonObject screener(Object body) {
+        return post("/v1/screener/live", body);
     }
 
     // ── Account & System ──────────────────────────────────────────────

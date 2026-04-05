@@ -1,10 +1,11 @@
 # FlashAlpha Java SDK
 
 Java client library for the [FlashAlpha](https://flashalpha.com) options analytics API.
-Provides real-time gamma exposure (GEX), delta exposure (DEX), vanna exposure (VEX),
-charm exposure (CHEX), 0DTE analytics, volatility surface, implied volatility, Black-Scholes
-greeks, Kelly criterion position sizing, stock quotes, and option chain data — all from a
-single, dependency-light Java 11+ package.
+Provides a **live options screener** (filter/rank symbols by GEX, VRP, IV, greeks, harvest
+scores, and custom formulas), real-time gamma exposure (GEX), delta exposure (DEX), vanna
+exposure (VEX), charm exposure (CHEX), 0DTE analytics, volatility surface, implied
+volatility, Black-Scholes greeks, Kelly criterion position sizing, stock quotes, and option
+chain data — all from a single, dependency-light Java 11+ package.
 
 ## Requirements
 
@@ -19,20 +20,20 @@ single, dependency-light Java 11+ package.
 <dependency>
     <groupId>com.flashalpha</groupId>
     <artifactId>flashalpha</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
 ### Gradle (Groovy DSL)
 
 ```groovy
-implementation 'com.flashalpha:flashalpha:0.2.0'
+implementation 'com.flashalpha:flashalpha:0.3.0'
 ```
 
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("com.flashalpha:flashalpha:0.2.0")
+implementation("com.flashalpha:flashalpha:0.3.0")
 ```
 
 ## Quick start
@@ -60,6 +61,21 @@ public class Example {
         // Implied volatility from market price
         JsonObject iv = client.iv(450.0, 455.0, 5.0, 3.50, "call", null, null);
         System.out.println(iv);
+
+        // Live options screener — harvestable VRP setups
+        java.util.Map<String, Object> filters = java.util.Map.of(
+            "op", "and",
+            "conditions", java.util.List.of(
+                java.util.Map.of("field", "regime", "operator", "eq", "value", "positive_gamma"),
+                java.util.Map.of("field", "harvest_score", "operator", "gte", "value", 65)
+            )
+        );
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("filters", filters);
+        body.put("sort", java.util.List.of(java.util.Map.of("field", "harvest_score", "direction", "desc")));
+        body.put("select", java.util.List.of("symbol", "price", "harvest_score", "dealer_flow_risk"));
+        JsonObject screen = client.screener(body);
+        System.out.println(screen);
     }
 }
 ```
@@ -199,9 +215,22 @@ mvn package
 
 MIT. See [LICENSE](LICENSE).
 
+## Other SDKs
+
+| Language | Package | Repository |
+|----------|---------|------------|
+| Python | `pip install flashalpha` | [flashalpha-python](https://github.com/FlashAlpha-lab/flashalpha-python) |
+| JavaScript | `npm i flashalpha` | [flashalpha-js](https://github.com/FlashAlpha-lab/flashalpha-js) |
+| .NET | `dotnet add package FlashAlpha` | [flashalpha-dotnet](https://github.com/FlashAlpha-lab/flashalpha-dotnet) |
+| Go | `go get github.com/FlashAlpha-lab/flashalpha-go` | [flashalpha-go](https://github.com/FlashAlpha-lab/flashalpha-go) |
+| MCP | Claude / LLM tool server | [flashalpha-mcp](https://github.com/FlashAlpha-lab/flashalpha-mcp) |
+
 ## Links
 
-- API documentation: [flashalpha.com](https://flashalpha.com)
-- Python SDK: [github.com/FlashAlpha-lab/flashalpha-python](https://github.com/FlashAlpha-lab/flashalpha-python)
-- .NET SDK: [github.com/FlashAlpha-lab/flashalpha-dotnet](https://github.com/FlashAlpha-lab/flashalpha-dotnet)
-- Issues: [github.com/FlashAlpha-lab/flashalpha-java/issues](https://github.com/FlashAlpha-lab/flashalpha-java/issues)
+- [FlashAlpha](https://flashalpha.com) — API keys, docs, pricing
+- [API Documentation](https://flashalpha.com/docs)
+- [Examples](https://github.com/FlashAlpha-lab/flashalpha-examples) — runnable tutorials
+- [GEX Explained](https://github.com/FlashAlpha-lab/gex-explained) — gamma exposure theory and code
+- [0DTE Options Analytics](https://github.com/FlashAlpha-lab/0dte-options-analytics) — 0DTE pin risk, expected move, dealer hedging
+- [Volatility Surface Python](https://github.com/FlashAlpha-lab/volatility-surface-python) — SVI calibration, variance swap, skew analysis
+- [Awesome Options Analytics](https://github.com/FlashAlpha-lab/awesome-options-analytics) — curated resource list

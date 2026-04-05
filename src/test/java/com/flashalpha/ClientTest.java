@@ -75,6 +75,42 @@ public class ClientTest {
         assertEquals("/v1/account", req.getPath());
     }
 
+    // ── Screener ───────────────────────────────────────────────────────
+
+    @Test
+    public void testScreenerEmpty() throws Exception {
+        enqueueOk();
+        client.screener(new java.util.LinkedHashMap<>());
+        RecordedRequest req = server.takeRequest();
+        assertEquals("POST", req.getMethod());
+        assertEquals("/v1/screener/live", req.getPath());
+        assertEquals("application/json", req.getHeader("Content-Type"));
+    }
+
+    @Test
+    public void testScreenerWithFilters() throws Exception {
+        enqueueOk();
+        java.util.Map<String, Object> filters = new java.util.LinkedHashMap<>();
+        filters.put("op", "and");
+        filters.put("conditions", java.util.List.of(
+                java.util.Map.of("field", "regime", "operator", "eq", "value", "positive_gamma"),
+                java.util.Map.of("field", "harvest_score", "operator", "gte", "value", 65)));
+
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("filters", filters);
+        body.put("sort", java.util.List.of(
+                java.util.Map.of("field", "harvest_score", "direction", "desc")));
+        body.put("select", java.util.List.of("symbol", "price", "harvest_score"));
+        body.put("limit", 20);
+
+        client.screener(body);
+        RecordedRequest req = server.takeRequest();
+        String bodyStr = req.getBody().readUtf8();
+        assertTrue(bodyStr.contains("\"op\":\"and\""));
+        assertTrue(bodyStr.contains("positive_gamma"));
+        assertTrue(bodyStr.contains("\"limit\":20"));
+    }
+
     // ── Market data ────────────────────────────────────────────────────
 
     @Test
