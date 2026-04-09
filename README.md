@@ -156,6 +156,8 @@ All methods return `com.google.gson.JsonObject`.
 | `narrative(symbol)` | Verbal narrative analysis of exposure | Growth+ |
 | `zeroDte(symbol)` | Real-time 0DTE analytics | Growth+ |
 | `zeroDte(symbol, strikeRange)` | 0DTE analytics with custom strike range | Growth+ |
+| `maxPain(symbol)` | Max pain analysis with dealer alignment, pain curve, pin probability | Growth+ |
+| `maxPain(symbol, expiration)` | Max pain for a single expiry | Growth+ |
 | `exposureHistory(symbol)` | Daily exposure snapshots | Growth+ |
 | `exposureHistory(symbol, days)` | Daily exposure snapshots with day count | Growth+ |
 
