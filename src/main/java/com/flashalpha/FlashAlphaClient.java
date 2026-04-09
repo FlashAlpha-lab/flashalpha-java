@@ -585,6 +585,31 @@ public class FlashAlphaClient {
 
     // ── Account & System ──────────────────────────────────────────────
 
+    // ── Max Pain ──────────────────────────────────────────────────────
+
+    /**
+     * Max pain analysis with dealer alignment, pain curve, OI breakdown,
+     * expected move, pin probability, and multi-expiry calendar.
+     * Requires Growth+ plan.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject maxPain(String symbol) {
+        return maxPain(symbol, null);
+    }
+
+    /**
+     * Max pain analysis filtered to a single expiry.
+     *
+     * @param symbol     Underlying symbol.
+     * @param expiration Expiration date filter (nullable, format {@code yyyy-MM-dd}).
+     */
+    public JsonObject maxPain(String symbol, String expiration) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiration != null) params.put("expiration", expiration);
+        return get("/v1/maxpain/" + symbol, params.isEmpty() ? null : params);
+    }
+
     // ── Screener ──────────────────────────────────────────────────────
 
     /**

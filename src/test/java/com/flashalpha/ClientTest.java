@@ -75,6 +75,53 @@ public class ClientTest {
         assertEquals("/v1/account", req.getPath());
     }
 
+    // ── Max Pain ───────────────────────────────────────────────────────
+
+    @Test
+    public void testMaxPain() throws Exception {
+        enqueueOk();
+        client.maxPain("SPY");
+        RecordedRequest req = server.takeRequest();
+        assertEquals("GET", req.getMethod());
+        assertEquals("/v1/maxpain/SPY", req.getPath());
+    }
+
+    @Test
+    public void testMaxPainWithExpiration() throws Exception {
+        enqueueOk();
+        client.maxPain("SPY", "2026-04-17");
+        RecordedRequest req = server.takeRequest();
+        assertTrue(req.getPath().contains("expiration=2026-04-17"));
+    }
+
+    @Test
+    public void testMaxPainWithoutExpiration() throws Exception {
+        enqueueOk();
+        client.maxPain("SPY");
+        RecordedRequest req = server.takeRequest();
+        assertFalse(req.getPath().contains("expiration"));
+    }
+
+    @Test
+    public void testMaxPainParsesResponse() throws Exception {
+        enqueue(200, "{\"max_pain_strike\":545,\"pin_probability\":68,\"dealer_alignment\":{\"alignment\":\"converging\"}}");
+        JsonObject result = client.maxPain("SPY");
+        assertEquals(545, result.get("max_pain_strike").getAsInt());
+        assertEquals(68, result.get("pin_probability").getAsInt());
+        assertEquals("converging", result.getAsJsonObject("dealer_alignment").get("alignment").getAsString());
+    }
+
+    @Test
+    public void testMaxPainThrows403() throws Exception {
+        enqueue(403, "{\"status\":\"ERROR\",\"error\":\"tier_restricted\",\"message\":\"Requires Growth.\",\"current_plan\":\"Free\",\"required_plan\":\"Growth\"}");
+        try {
+            client.maxPain("SPY");
+            fail("expected TierRestrictedException");
+        } catch (TierRestrictedException e) {
+            assertEquals("Free", e.getCurrentPlan());
+        }
+    }
+
     // ── Screener ───────────────────────────────────────────────────────
 
     @Test

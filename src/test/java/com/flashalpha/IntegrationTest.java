@@ -140,6 +140,35 @@ public class IntegrationTest {
         assertNotNull(result);
     }
 
+    // ── Max Pain ──────────────────────────────────────────────────────
+
+    @Test
+    public void testMaxPain() {
+        JsonObject result = client.maxPain("SPY");
+        assertNotNull(result);
+        assertTrue(result.has("max_pain_strike"));
+        assertTrue(result.has("pain_curve"));
+        assertTrue(result.has("dealer_alignment"));
+        assertTrue(result.has("pin_probability"));
+    }
+
+    @Test
+    public void testMaxPainFieldStructure() {
+        JsonObject result = client.maxPain("SPY");
+        String direction = result.getAsJsonObject("distance").get("direction").getAsString();
+        assertTrue("above".equals(direction) || "below".equals(direction) || "at".equals(direction));
+        String signal = result.get("signal").getAsString();
+        assertTrue("bullish".equals(signal) || "bearish".equals(signal) || "neutral".equals(signal));
+    }
+
+    @Test
+    public void testMaxPainMultiExpiry() {
+        JsonObject result = client.maxPain("SPY");
+        if (result.has("max_pain_by_expiration") && !result.get("max_pain_by_expiration").isJsonNull()) {
+            assertTrue(result.getAsJsonArray("max_pain_by_expiration").size() > 0);
+        }
+    }
+
     // ── Screener ──────────────────────────────────────────────────────
 
     @Test
