@@ -610,6 +610,47 @@ public class FlashAlphaClient {
         return get("/v1/maxpain/" + symbol, params.isEmpty() ? null : params);
     }
 
+    // ── VRP (Variance Risk Premium) ───────────────────────────────────
+
+    /**
+     * Variance risk premium analytics — the implied-vs-realized vol spread,
+     * conditioned on dealer gamma and vanna regime, with strategy scores for
+     * harvesting. Requires Alpha+ plan.
+     *
+     * <p>Returns a nested payload. Key access paths (note: most metrics are
+     * NOT top-level — drill into the nested objects):
+     * <ul>
+     *   <li>Top-level: {@code symbol}, {@code underlying_price}, {@code as_of},
+     *       {@code market_open}, {@code net_harvest_score},
+     *       {@code dealer_flow_risk}</li>
+     *   <li>{@code response.getAsJsonObject("vrp")} → {@code z_score},
+     *       {@code percentile}, {@code atm_iv},
+     *       {@code rv_5d/10d/20d/30d}, {@code vrp_5d/10d/20d/30d},
+     *       {@code history_days}</li>
+     *   <li>{@code response.getAsJsonObject("directional")} →
+     *       {@code put_wing_iv_25d}, {@code call_wing_iv_25d},
+     *       {@code downside_rv_20d}, {@code upside_rv_20d},
+     *       {@code downside_vrp}, {@code upside_vrp}
+     *       (NOT {@code put_vrp} / {@code call_vrp})</li>
+     *   <li>{@code response.getAsJsonObject("regime")} → {@code gamma},
+     *       {@code vrp_regime}, {@code net_gex}, {@code gamma_flip}</li>
+     *   <li>{@code response.getAsJsonObject("gex_conditioned")} →
+     *       {@code regime}, {@code harvest_score}, {@code interpretation}
+     *       (object may be JSON null)</li>
+     *   <li>{@code response.getAsJsonObject("strategy_scores")} →
+     *       {@code short_put_spread}, {@code short_strangle},
+     *       {@code iron_condor}, {@code calendar_spread}
+     *       (object may be JSON null)</li>
+     *   <li>{@code response.getAsJsonArray("term_vrp")} → array of
+     *       {@code {dte, iv, rv, vrp}} term-structure points</li>
+     * </ul>
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject vrp(String symbol) {
+        return get("/v1/vrp/" + symbol);
+    }
+
     // ── Screener ──────────────────────────────────────────────────────
 
     /**
