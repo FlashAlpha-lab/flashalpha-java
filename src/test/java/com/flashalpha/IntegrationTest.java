@@ -143,6 +143,152 @@ public class IntegrationTest {
         assertNotNull(result);
     }
 
+    // ── Zero-DTE ───────────────────────────────────────────────────────
+
+    /**
+     * Validate the full 0DTE response shape — fine-grained hedging buckets,
+     * distance-to-flip in dollars/sigmas, pin sub-scores, flow concentration,
+     * wall strength + level cluster, the new liquidity & metadata sections,
+     * and per-strike greeks/quotes. Uses SPX which has daily 0DTE.
+     */
+    @Test
+    public void testZeroDteIncludesAllNewFields() {
+        JsonObject r = client.zeroDte("SPX");
+        assertNotNull(r);
+        assertEquals("SPX", r.get("symbol").getAsString());
+
+        if (r.has("no_zero_dte") && r.get("no_zero_dte").getAsBoolean()) {
+            assertTrue(r.has("next_zero_dte_expiry"));
+            return;
+        }
+
+        // top-level
+        for (String k : new String[]{"underlying_price", "expiration", "as_of", "market_open",
+                "time_to_close_hours", "time_to_close_pct"}) {
+            assertTrue("top-level " + k + " missing", r.has(k));
+        }
+
+        // regime
+        JsonObject regime = r.getAsJsonObject("regime");
+        for (String k : new String[]{"label", "description", "gamma_flip", "spot_vs_flip", "spot_to_flip_pct",
+                "distance_to_flip_dollars", "distance_to_flip_sigmas"}) {
+            assertTrue("regime." + k + " missing", regime.has(k));
+        }
+
+        // exposures
+        JsonObject exposures = r.getAsJsonObject("exposures");
+        for (String k : new String[]{"net_gex", "net_dex", "net_vex", "net_chex",
+                "pct_of_total_gex", "total_chain_net_gex"}) {
+            assertTrue("exposures." + k + " missing", exposures.has(k));
+        }
+
+        // expected_move
+        JsonObject em = r.getAsJsonObject("expected_move");
+        for (String k : new String[]{"implied_1sd_dollars", "implied_1sd_pct", "remaining_1sd_dollars",
+                "remaining_1sd_pct", "upper_bound", "lower_bound",
+                "straddle_price", "atm_iv"}) {
+            assertTrue("expected_move." + k + " missing", em.has(k));
+        }
+
+        // pin_risk
+        JsonObject pr = r.getAsJsonObject("pin_risk");
+        for (String k : new String[]{"magnet_strike", "magnet_gex", "distance_to_magnet_pct",
+                "pin_score", "components", "max_pain",
+                "oi_concentration_top3_pct", "description"}) {
+            assertTrue("pin_risk." + k + " missing", pr.has(k));
+        }
+        JsonObject components = pr.getAsJsonObject("components");
+        for (String k : new String[]{"oi_score", "proximity_score", "time_score", "gamma_score"}) {
+            assertTrue("pin_risk.components." + k + " missing", components.has(k));
+        }
+
+        // hedging — fine-grained buckets + convexity
+        JsonObject hedging = r.getAsJsonObject("hedging");
+        for (String bucket : new String[]{"spot_up_10bp", "spot_down_10bp",
+                "spot_up_25bp", "spot_down_25bp",
+                "spot_up_half_pct", "spot_down_half_pct",
+                "spot_up_1pct", "spot_down_1pct"}) {
+            assertTrue("hedging." + bucket + " missing", hedging.has(bucket));
+            JsonObject b = hedging.getAsJsonObject(bucket);
+            for (String k : new String[]{"dealer_shares_to_trade", "direction", "notional_usd"}) {
+                assertTrue("hedging." + bucket + "." + k + " missing", b.has(k));
+            }
+        }
+        assertTrue(hedging.has("convexity_at_spot"));
+
+        // decay
+        JsonObject decay = r.getAsJsonObject("decay");
+        for (String k : new String[]{"net_theta_dollars", "theta_per_hour_remaining", "charm_regime",
+                "charm_description", "gamma_acceleration", "description"}) {
+            assertTrue("decay." + k + " missing", decay.has(k));
+        }
+
+        // vol_context
+        JsonObject vc = r.getAsJsonObject("vol_context");
+        for (String k : new String[]{"zero_dte_atm_iv", "seven_dte_atm_iv", "iv_ratio_0dte_7dte",
+                "vix", "vanna_exposure", "vanna_interpretation", "description"}) {
+            assertTrue("vol_context." + k + " missing", vc.has(k));
+        }
+
+        // flow
+        JsonObject flow = r.getAsJsonObject("flow");
+        for (String k : new String[]{"total_volume", "call_volume", "put_volume",
+                "net_call_minus_put_volume",
+                "total_oi", "call_oi", "put_oi",
+                "pc_ratio_volume", "pc_ratio_oi", "volume_to_oi_ratio",
+                "atm_volume_share_pct", "top3_strike_volume_pct"}) {
+            assertTrue("flow." + k + " missing", flow.has(k));
+        }
+
+        // levels
+        JsonObject levels = r.getAsJsonObject("levels");
+        for (String k : new String[]{"call_wall", "call_wall_gex", "call_wall_strength",
+                "distance_to_call_wall_pct",
+                "put_wall", "put_wall_gex", "put_wall_strength",
+                "distance_to_put_wall_pct",
+                "distance_to_magnet_dollars",
+                "highest_oi_strike", "highest_oi_total",
+                "max_positive_gamma", "max_negative_gamma",
+                "level_cluster_score"}) {
+            assertTrue("levels." + k + " missing", levels.has(k));
+        }
+
+        // liquidity (new section)
+        JsonObject liquidity = r.getAsJsonObject("liquidity");
+        for (String k : new String[]{"atm_spread_pct", "weighted_spread_pct", "execution_score"}) {
+            assertTrue("liquidity." + k + " missing", liquidity.has(k));
+        }
+
+        // metadata (new section)
+        JsonObject metadata = r.getAsJsonObject("metadata");
+        for (String k : new String[]{"snapshot_age_seconds", "chain_contract_count",
+                "data_quality_score", "greek_smoothness_score"}) {
+            assertTrue("metadata." + k + " missing", metadata.has(k));
+        }
+
+        // per-strike entries
+        com.google.gson.JsonArray strikes = r.getAsJsonArray("strikes");
+        assertNotNull(strikes);
+        if (strikes.size() > 0) {
+            JsonObject s = strikes.get(0).getAsJsonObject();
+            for (String k : new String[]{"strike", "distance_from_spot_pct",
+                    "call_symbol", "put_symbol",
+                    "call_gex", "put_gex", "net_gex",
+                    "call_dex", "put_dex", "net_dex",
+                    "net_vex", "net_chex",
+                    "call_oi", "put_oi", "call_volume", "put_volume",
+                    "gex_share_pct", "oi_share_pct", "volume_share_pct",
+                    "call_iv", "put_iv",
+                    "call_delta", "put_delta",
+                    "call_gamma", "put_gamma",
+                    "call_theta", "put_theta",
+                    "call_mid", "put_mid",
+                    "call_spread_pct", "put_spread_pct"}) {
+                assertTrue("strikes[0]." + k + " missing", s.has(k));
+            }
+        }
+    }
+
     // ── Max Pain ──────────────────────────────────────────────────────
 
     @Test
