@@ -438,6 +438,29 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #zeroDte(String)}. Returns a populated
+     * {@link ZeroDteResponse} with named fields for every documented value.
+     * The original {@link #zeroDte(String)} method is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public ZeroDteResponse zeroDteTyped(String symbol) {
+        return zeroDteTyped(symbol, null);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #zeroDte(String, Double)} with configurable
+     * strike range. Returns a populated {@link ZeroDteResponse}.
+     *
+     * @param symbol      Underlying symbol.
+     * @param strikeRange Percentage range around spot to include (nullable).
+     */
+    public ZeroDteResponse zeroDteTyped(String symbol, Double strikeRange) {
+        JsonObject raw = zeroDte(symbol, strikeRange);
+        return gson.fromJson(raw, ZeroDteResponse.class);
+    }
+
+    /**
      * Daily exposure snapshots for trend analysis. Requires Growth+ plan.
      *
      * @param symbol Underlying symbol.

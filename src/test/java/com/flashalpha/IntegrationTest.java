@@ -151,6 +151,189 @@ public class IntegrationTest {
      * wall strength + level cluster, the new liquidity & metadata sections,
      * and per-strike greeks/quotes. Uses SPX which has daily 0DTE.
      */
+    /**
+     * Comprehensive end-to-end test of {@code zeroDteTyped()}. Every typed field
+     * is asserted populated (non-null) so a renamed {@code @SerializedName}
+     * would surface immediately. The full untyped-shape coverage lives in
+     * {@link #testZeroDteIncludesAllNewFields()}; this is the typed mirror.
+     */
+    @Test
+    public void testZeroDteTypedDeserializesAllFields() {
+        ZeroDteResponse r = client.zeroDteTyped("SPX");
+        assertNotNull(r);
+        assertEquals("SPX", r.symbol);
+
+        if (Boolean.TRUE.equals(r.noZeroDte)) {
+            assertNotNull(r.nextZeroDteExpiry);
+            return;
+        }
+
+        // top-level
+        assertNotNull("underlying_price", r.underlyingPrice);
+        assertNotNull("as_of", r.asOf);
+        assertNotNull("market_open", r.marketOpen);
+
+        // regime
+        assertNotNull("regime", r.regime);
+        assertNotNull("regime.label", r.regime.label);
+        assertNotNull("regime.gamma_flip", r.regime.gammaFlip);
+        assertNotNull("regime.spot_vs_flip", r.regime.spotVsFlip);
+        assertNotNull("regime.spot_to_flip_pct", r.regime.spotToFlipPct);
+        assertNotNull("regime.distance_to_flip_dollars", r.regime.distanceToFlipDollars);
+        assertNotNull("regime.distance_to_flip_sigmas", r.regime.distanceToFlipSigmas);
+
+        // exposures
+        assertNotNull("exposures", r.exposures);
+        assertNotNull("exposures.net_gex", r.exposures.netGex);
+        assertNotNull("exposures.net_dex", r.exposures.netDex);
+        assertNotNull("exposures.net_vex", r.exposures.netVex);
+        assertNotNull("exposures.net_chex", r.exposures.netChex);
+        assertNotNull("exposures.pct_of_total_gex", r.exposures.pctOfTotalGex);
+        assertNotNull("exposures.total_chain_net_gex", r.exposures.totalChainNetGex);
+
+        // expected_move
+        assertNotNull("expected_move", r.expectedMove);
+        assertNotNull("expected_move.implied_1sd_dollars", r.expectedMove.implied1SdDollars);
+        assertNotNull("expected_move.implied_1sd_pct", r.expectedMove.implied1SdPct);
+        assertNotNull("expected_move.upper_bound", r.expectedMove.upperBound);
+        assertNotNull("expected_move.lower_bound", r.expectedMove.lowerBound);
+        assertNotNull("expected_move.straddle_price", r.expectedMove.straddlePrice);
+        assertNotNull("expected_move.atm_iv", r.expectedMove.atmIv);
+
+        // pin_risk
+        assertNotNull("pin_risk", r.pinRisk);
+        assertNotNull("pin_risk.magnet_strike", r.pinRisk.magnetStrike);
+        assertNotNull("pin_risk.magnet_gex", r.pinRisk.magnetGex);
+        assertNotNull("pin_risk.distance_to_magnet_pct", r.pinRisk.distanceToMagnetPct);
+        assertNotNull("pin_risk.pin_score", r.pinRisk.pinScore);
+        assertNotNull("pin_risk.components", r.pinRisk.components);
+        assertNotNull("pin_risk.components.oi_score", r.pinRisk.components.oiScore);
+        assertNotNull("pin_risk.components.proximity_score", r.pinRisk.components.proximityScore);
+        assertNotNull("pin_risk.components.time_score", r.pinRisk.components.timeScore);
+        assertNotNull("pin_risk.components.gamma_score", r.pinRisk.components.gammaScore);
+        assertNotNull("pin_risk.max_pain", r.pinRisk.maxPain);
+        assertNotNull("pin_risk.oi_concentration_top3_pct", r.pinRisk.oiConcentrationTop3Pct);
+
+        // hedging — all 8 buckets + convexity_at_spot
+        assertNotNull("hedging", r.hedging);
+        ZeroDteResponse.HedgingBucket[] buckets = {
+                r.hedging.spotUp10Bp, r.hedging.spotDown10Bp,
+                r.hedging.spotUp25Bp, r.hedging.spotDown25Bp,
+                r.hedging.spotUpHalfPct, r.hedging.spotDownHalfPct,
+                r.hedging.spotUp1Pct, r.hedging.spotDown1Pct,
+        };
+        String[] bucketNames = {
+                "spotUp10Bp", "spotDown10Bp", "spotUp25Bp", "spotDown25Bp",
+                "spotUpHalfPct", "spotDownHalfPct", "spotUp1Pct", "spotDown1Pct",
+        };
+        for (int i = 0; i < buckets.length; i++) {
+            assertNotNull("hedging." + bucketNames[i], buckets[i]);
+            assertNotNull("hedging." + bucketNames[i] + ".dealer_shares_to_trade",
+                    buckets[i].dealerSharesToTrade);
+            assertNotNull("hedging." + bucketNames[i] + ".direction", buckets[i].direction);
+            assertNotNull("hedging." + bucketNames[i] + ".notional_usd", buckets[i].notionalUsd);
+        }
+        assertNotNull("hedging.convexity_at_spot", r.hedging.convexityAtSpot);
+
+        // decay
+        assertNotNull("decay", r.decay);
+        assertNotNull("decay.net_theta_dollars", r.decay.netThetaDollars);
+        assertNotNull("decay.charm_regime", r.decay.charmRegime);
+        assertNotNull("decay.charm_description", r.decay.charmDescription);
+        assertNotNull("decay.gamma_acceleration", r.decay.gammaAcceleration);
+
+        // vol_context
+        assertNotNull("vol_context", r.volContext);
+        assertNotNull("vol_context.zero_dte_atm_iv", r.volContext.zeroDteAtmIv);
+        assertNotNull("vol_context.seven_dte_atm_iv", r.volContext.sevenDteAtmIv);
+        assertNotNull("vol_context.iv_ratio_0dte_7dte", r.volContext.ivRatio0Dte7Dte);
+        assertNotNull("vol_context.vix", r.volContext.vix);
+        assertNotNull("vol_context.vanna_exposure", r.volContext.vannaExposure);
+        assertNotNull("vol_context.vanna_interpretation", r.volContext.vannaInterpretation);
+
+        // flow
+        assertNotNull("flow", r.flow);
+        assertNotNull("flow.total_volume", r.flow.totalVolume);
+        assertNotNull("flow.call_volume", r.flow.callVolume);
+        assertNotNull("flow.put_volume", r.flow.putVolume);
+        assertNotNull("flow.net_call_minus_put_volume", r.flow.netCallMinusPutVolume);
+        assertNotNull("flow.total_oi", r.flow.totalOi);
+        assertNotNull("flow.call_oi", r.flow.callOi);
+        assertNotNull("flow.put_oi", r.flow.putOi);
+        assertNotNull("flow.pc_ratio_volume", r.flow.pcRatioVolume);
+        assertNotNull("flow.pc_ratio_oi", r.flow.pcRatioOi);
+        assertNotNull("flow.volume_to_oi_ratio", r.flow.volumeToOiRatio);
+        assertNotNull("flow.atm_volume_share_pct", r.flow.atmVolumeSharePct);
+        assertNotNull("flow.top3_strike_volume_pct", r.flow.top3StrikeVolumePct);
+
+        // levels
+        assertNotNull("levels", r.levels);
+        assertNotNull("levels.call_wall", r.levels.callWall);
+        assertNotNull("levels.call_wall_gex", r.levels.callWallGex);
+        assertNotNull("levels.call_wall_strength", r.levels.callWallStrength);
+        assertNotNull("levels.distance_to_call_wall_pct", r.levels.distanceToCallWallPct);
+        assertNotNull("levels.put_wall", r.levels.putWall);
+        assertNotNull("levels.put_wall_gex", r.levels.putWallGex);
+        assertNotNull("levels.put_wall_strength", r.levels.putWallStrength);
+        assertNotNull("levels.distance_to_put_wall_pct", r.levels.distanceToPutWallPct);
+        assertNotNull("levels.distance_to_magnet_dollars", r.levels.distanceToMagnetDollars);
+        assertNotNull("levels.highest_oi_strike", r.levels.highestOiStrike);
+        assertNotNull("levels.highest_oi_total", r.levels.highestOiTotal);
+        assertNotNull("levels.max_positive_gamma", r.levels.maxPositiveGamma);
+        assertNotNull("levels.max_negative_gamma", r.levels.maxNegativeGamma);
+        assertNotNull("levels.level_cluster_score", r.levels.levelClusterScore);
+
+        // liquidity
+        assertNotNull("liquidity", r.liquidity);
+        assertNotNull("liquidity.atm_spread_pct", r.liquidity.atmSpreadPct);
+        assertNotNull("liquidity.weighted_spread_pct", r.liquidity.weightedSpreadPct);
+        assertNotNull("liquidity.execution_score", r.liquidity.executionScore);
+
+        // metadata
+        assertNotNull("metadata", r.metadata);
+        assertNotNull("metadata.snapshot_age_seconds", r.metadata.snapshotAgeSeconds);
+        assertNotNull("metadata.chain_contract_count", r.metadata.chainContractCount);
+        assertNotNull("metadata.data_quality_score", r.metadata.dataQualityScore);
+        assertNotNull("metadata.greek_smoothness_score", r.metadata.greekSmoothnessScore);
+
+        // strikes[0] — every per-strike field
+        assertNotNull("strikes", r.strikes);
+        if (!r.strikes.isEmpty()) {
+            ZeroDteResponse.Strike s = r.strikes.get(0);
+            assertTrue("strike > 0", s.strike != null && s.strike > 0);
+            assertNotNull("strike[0].distance_from_spot_pct", s.distanceFromSpotPct);
+            assertNotNull("strike[0].call_symbol", s.callSymbol);
+            assertNotNull("strike[0].put_symbol", s.putSymbol);
+            assertNotNull("strike[0].call_gex", s.callGex);
+            assertNotNull("strike[0].put_gex", s.putGex);
+            assertNotNull("strike[0].net_gex", s.netGex);
+            assertNotNull("strike[0].call_dex", s.callDex);
+            assertNotNull("strike[0].put_dex", s.putDex);
+            assertNotNull("strike[0].net_dex", s.netDex);
+            assertNotNull("strike[0].net_vex", s.netVex);
+            assertNotNull("strike[0].net_chex", s.netChex);
+            assertNotNull("strike[0].call_oi", s.callOi);
+            assertNotNull("strike[0].put_oi", s.putOi);
+            assertNotNull("strike[0].call_volume", s.callVolume);
+            assertNotNull("strike[0].put_volume", s.putVolume);
+            assertNotNull("strike[0].gex_share_pct", s.gexSharePct);
+            assertNotNull("strike[0].oi_share_pct", s.oiSharePct);
+            assertNotNull("strike[0].volume_share_pct", s.volumeSharePct);
+            assertNotNull("strike[0].call_iv", s.callIv);
+            assertNotNull("strike[0].put_iv", s.putIv);
+            assertNotNull("strike[0].call_delta", s.callDelta);
+            assertNotNull("strike[0].put_delta", s.putDelta);
+            assertNotNull("strike[0].call_gamma", s.callGamma);
+            assertNotNull("strike[0].put_gamma", s.putGamma);
+            assertNotNull("strike[0].call_theta", s.callTheta);
+            assertNotNull("strike[0].put_theta", s.putTheta);
+            assertNotNull("strike[0].call_mid", s.callMid);
+            assertNotNull("strike[0].put_mid", s.putMid);
+            assertNotNull("strike[0].call_spread_pct", s.callSpreadPct);
+            assertNotNull("strike[0].put_spread_pct", s.putSpreadPct);
+        }
+    }
+
     @Test
     public void testZeroDteIncludesAllNewFields() {
         JsonObject r = client.zeroDte("SPX");
