@@ -79,6 +79,11 @@ public class FlashAlphaClient {
 
     // ── Internal HTTP helpers ─────────────────────────────────────────
 
+    /** URL-escape a single path segment (e.g. a ticker) — escapes / ? % etc. */
+    private static String _seg(String s) {
+        return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
+    }
+
     private JsonObject get(String path) {
         return get(path, null);
     }
@@ -213,7 +218,7 @@ public class FlashAlphaClient {
      * @param ticker Stock ticker symbol, e.g. {@code "SPY"}.
      */
     public JsonObject stockQuote(String ticker) {
-        return get("/stockquote/" + ticker);
+        return get("/stockquote/" + _seg(ticker));
     }
 
     /**
@@ -240,7 +245,7 @@ public class FlashAlphaClient {
         if (expiry != null) params.put("expiry", expiry);
         if (strike != null) params.put("strike", String.valueOf(strike));
         if (type != null) params.put("type", type);
-        return get("/optionquote/" + ticker, params.isEmpty() ? null : params);
+        return get("/optionquote/" + _seg(ticker), params.isEmpty() ? null : params);
     }
 
     /**
@@ -249,7 +254,7 @@ public class FlashAlphaClient {
      * @param symbol Underlying symbol.
      */
     public JsonObject surface(String symbol) {
-        return get("/v1/surface/" + symbol);
+        return get("/v1/surface/" + _seg(symbol));
     }
 
     /**
@@ -258,7 +263,7 @@ public class FlashAlphaClient {
      * @param symbol Underlying symbol.
      */
     public JsonObject stockSummary(String symbol) {
-        return get("/v1/stock/" + symbol + "/summary");
+        return get("/v1/stock/" + _seg(symbol) + "/summary");
     }
 
     // ── Historical ────────────────────────────────────────────────────
@@ -274,7 +279,7 @@ public class FlashAlphaClient {
         Map<String, String> params = new LinkedHashMap<>();
         params.put("date", date);
         if (time != null) params.put("time", time);
-        return get("/historical/stockquote/" + ticker, params);
+        return get("/historical/stockquote/" + _seg(ticker), params);
     }
 
     /**
@@ -295,7 +300,7 @@ public class FlashAlphaClient {
         if (expiry != null) params.put("expiry", expiry);
         if (strike != null) params.put("strike", String.valueOf(strike));
         if (type != null) params.put("type", type);
-        return get("/historical/optionquote/" + ticker, params);
+        return get("/historical/optionquote/" + _seg(ticker), params);
     }
 
     // ── Exposure Analytics ────────────────────────────────────────────
@@ -320,7 +325,7 @@ public class FlashAlphaClient {
         Map<String, String> params = new LinkedHashMap<>();
         if (expiration != null) params.put("expiration", expiration);
         if (minOi != null) params.put("min_oi", String.valueOf(minOi));
-        return get("/v1/exposure/gex/" + symbol, params.isEmpty() ? null : params);
+        return get("/v1/exposure/gex/" + _seg(symbol), params.isEmpty() ? null : params);
     }
 
     /**
@@ -341,7 +346,7 @@ public class FlashAlphaClient {
     public JsonObject dex(String symbol, String expiration) {
         Map<String, String> params = new LinkedHashMap<>();
         if (expiration != null) params.put("expiration", expiration);
-        return get("/v1/exposure/dex/" + symbol, params.isEmpty() ? null : params);
+        return get("/v1/exposure/dex/" + _seg(symbol), params.isEmpty() ? null : params);
     }
 
     /**
@@ -362,7 +367,7 @@ public class FlashAlphaClient {
     public JsonObject vex(String symbol, String expiration) {
         Map<String, String> params = new LinkedHashMap<>();
         if (expiration != null) params.put("expiration", expiration);
-        return get("/v1/exposure/vex/" + symbol, params.isEmpty() ? null : params);
+        return get("/v1/exposure/vex/" + _seg(symbol), params.isEmpty() ? null : params);
     }
 
     /**
@@ -383,7 +388,7 @@ public class FlashAlphaClient {
     public JsonObject chex(String symbol, String expiration) {
         Map<String, String> params = new LinkedHashMap<>();
         if (expiration != null) params.put("expiration", expiration);
-        return get("/v1/exposure/chex/" + symbol, params.isEmpty() ? null : params);
+        return get("/v1/exposure/chex/" + _seg(symbol), params.isEmpty() ? null : params);
     }
 
     /**
@@ -392,7 +397,7 @@ public class FlashAlphaClient {
      * @param symbol Underlying symbol.
      */
     public JsonObject exposureLevels(String symbol) {
-        return get("/v1/exposure/levels/" + symbol);
+        return get("/v1/exposure/levels/" + _seg(symbol));
     }
 
     /**
@@ -402,7 +407,7 @@ public class FlashAlphaClient {
      * @param symbol Underlying symbol.
      */
     public JsonObject exposureSummary(String symbol) {
-        return get("/v1/exposure/summary/" + symbol);
+        return get("/v1/exposure/summary/" + _seg(symbol));
     }
 
     /**
@@ -411,7 +416,7 @@ public class FlashAlphaClient {
      * @param symbol Underlying symbol.
      */
     public JsonObject narrative(String symbol) {
-        return get("/v1/exposure/narrative/" + symbol);
+        return get("/v1/exposure/narrative/" + _seg(symbol));
     }
 
     /**
@@ -434,7 +439,7 @@ public class FlashAlphaClient {
     public JsonObject zeroDte(String symbol, Double strikeRange) {
         Map<String, String> params = new LinkedHashMap<>();
         if (strikeRange != null) params.put("strike_range", String.valueOf(strikeRange));
-        return get("/v1/exposure/zero-dte/" + symbol, params.isEmpty() ? null : params);
+        return get("/v1/exposure/zero-dte/" + _seg(symbol), params.isEmpty() ? null : params);
     }
 
     /**
@@ -478,7 +483,7 @@ public class FlashAlphaClient {
     public JsonObject exposureHistory(String symbol, Integer days) {
         Map<String, String> params = new LinkedHashMap<>();
         if (days != null) params.put("days", String.valueOf(days));
-        return get("/v1/exposure/history/" + symbol, params.isEmpty() ? null : params);
+        return get("/v1/exposure/history/" + _seg(symbol), params.isEmpty() ? null : params);
     }
 
     // ── Pricing & Sizing ──────────────────────────────────────────────
@@ -568,7 +573,7 @@ public class FlashAlphaClient {
      * @param symbol Underlying symbol.
      */
     public JsonObject volatility(String symbol) {
-        return get("/v1/volatility/" + symbol);
+        return get("/v1/volatility/" + _seg(symbol));
     }
 
     /**
@@ -578,7 +583,7 @@ public class FlashAlphaClient {
      * @param symbol Underlying symbol.
      */
     public JsonObject advVolatility(String symbol) {
-        return get("/v1/adv_volatility/" + symbol);
+        return get("/v1/adv_volatility/" + _seg(symbol));
     }
 
     // ── Reference Data ────────────────────────────────────────────────
@@ -596,7 +601,7 @@ public class FlashAlphaClient {
      * @param ticker Stock ticker symbol.
      */
     public JsonObject options(String ticker) {
-        return get("/v1/options/" + ticker);
+        return get("/v1/options/" + _seg(ticker));
     }
 
     /**
@@ -630,7 +635,7 @@ public class FlashAlphaClient {
     public JsonObject maxPain(String symbol, String expiration) {
         Map<String, String> params = new LinkedHashMap<>();
         if (expiration != null) params.put("expiration", expiration);
-        return get("/v1/maxpain/" + symbol, params.isEmpty() ? null : params);
+        return get("/v1/maxpain/" + _seg(symbol), params.isEmpty() ? null : params);
     }
 
     // ── VRP (Variance Risk Premium) ───────────────────────────────────
@@ -671,7 +676,7 @@ public class FlashAlphaClient {
      * @param symbol Underlying symbol.
      */
     public JsonObject vrp(String symbol) {
-        return get("/v1/vrp/" + symbol);
+        return get("/v1/vrp/" + _seg(symbol));
     }
 
     // ── Screener ──────────────────────────────────────────────────────

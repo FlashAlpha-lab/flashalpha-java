@@ -20,20 +20,20 @@ chain data — all from a single, dependency-light Java 11+ package.
 <dependency>
     <groupId>com.flashalpha</groupId>
     <artifactId>flashalpha</artifactId>
-    <version>0.3.2</version>
+    <version>0.3.5</version>
 </dependency>
 ```
 
 ### Gradle (Groovy DSL)
 
 ```groovy
-implementation 'com.flashalpha:flashalpha:0.3.2'
+implementation 'com.flashalpha:flashalpha:0.3.5'
 ```
 
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("com.flashalpha:flashalpha:0.3.2")
+implementation("com.flashalpha:flashalpha:0.3.5")
 ```
 
 ## Quick start
