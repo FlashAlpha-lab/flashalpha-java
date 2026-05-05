@@ -1,5 +1,6 @@
 package com.flashalpha;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.junit.Assume;
@@ -670,6 +671,84 @@ public class IntegrationTest {
 
         // strategy_scores (nullable)
         assertTrue(r.has("strategy_scores"));
+    }
+
+    @Test
+    public void testVrpEveryFieldDeclaredInPocoMustBeReferenced() {
+        JsonObject r = client.vrp("SPY");
+
+        // Customer traps: must NOT be top-level
+        for (String trap : new String[] {"z_score", "percentile", "atm_iv",
+                                          "net_gex", "put_vrp", "call_vrp", "harvest_score"}) {
+            assertNull("top-level " + trap + " must NOT exist", r.get(trap));
+        }
+
+        // ── top-level scalars ──
+        assertEquals("SPY", r.get("symbol").getAsString());
+        assertTrue(r.get("underlying_price").getAsJsonPrimitive().isNumber());
+        assertTrue(r.get("as_of").getAsJsonPrimitive().isString());
+        assertTrue(r.get("market_open").getAsJsonPrimitive().isBoolean());
+        for (String k : new String[] {"variance_risk_premium", "convexity_premium", "fair_vol",
+                                       "net_harvest_score", "dealer_flow_risk"}) {
+            assertTrue(k, r.get(k).getAsJsonPrimitive().isNumber());
+        }
+        assertTrue(r.get("warnings").isJsonArray());
+
+        // ── vrp.* core block ──
+        JsonObject core = r.getAsJsonObject("vrp");
+        for (String k : new String[] {"atm_iv", "rv_5d", "rv_10d", "rv_20d", "rv_30d",
+                                       "vrp_5d", "vrp_10d", "vrp_20d", "vrp_30d",
+                                       "z_score", "history_days"}) {
+            assertTrue("vrp." + k, core.get(k).getAsJsonPrimitive().isNumber());
+        }
+        assertTrue(core.get("percentile").getAsJsonPrimitive().isNumber());
+
+        // ── directional ──
+        JsonObject dir = r.getAsJsonObject("directional");
+        for (String k : new String[] {"put_wing_iv_25d", "call_wing_iv_25d",
+                                       "downside_rv_20d", "upside_rv_20d",
+                                       "downside_vrp", "upside_vrp"}) {
+            assertTrue("directional." + k, dir.get(k).getAsJsonPrimitive().isNumber());
+        }
+
+        // ── term_vrp[] ──
+        JsonArray term = r.getAsJsonArray("term_vrp");
+        assertTrue("term_vrp non-empty", term.size() > 0);
+        JsonObject first = term.get(0).getAsJsonObject();
+        for (String k : new String[] {"dte", "iv", "rv", "vrp"}) {
+            assertTrue("term_vrp[0]." + k, first.has(k));
+        }
+
+        // ── gex_conditioned + vanna_conditioned ──
+        JsonObject gc = r.getAsJsonObject("gex_conditioned");
+        assertTrue(gc.get("regime").getAsJsonPrimitive().isString());
+        assertTrue(gc.get("harvest_score").getAsJsonPrimitive().isNumber());
+        assertTrue(gc.get("interpretation").getAsJsonPrimitive().isString());
+        JsonObject vc = r.getAsJsonObject("vanna_conditioned");
+        assertTrue(vc.get("outlook").getAsJsonPrimitive().isString());
+        assertTrue(vc.get("interpretation").getAsJsonPrimitive().isString());
+
+        // ── regime — net_gex lives HERE ──
+        JsonObject reg = r.getAsJsonObject("regime");
+        assertTrue(reg.get("gamma").getAsJsonPrimitive().isString());
+        assertTrue(reg.get("vrp_regime").getAsJsonPrimitive().isString());
+        assertTrue(reg.get("net_gex").getAsJsonPrimitive().isNumber());
+        assertTrue(reg.get("gamma_flip").getAsJsonPrimitive().isNumber());
+
+        // ── strategy_scores ──
+        JsonObject ss = r.getAsJsonObject("strategy_scores");
+        for (String k : new String[] {"short_put_spread", "short_strangle",
+                                       "iron_condor", "calendar_spread"}) {
+            assertTrue("strategy_scores." + k, ss.get(k).getAsJsonPrimitive().isNumber());
+        }
+
+        // ── macro (live includes fed_funds) ──
+        JsonObject macro = r.getAsJsonObject("macro");
+        for (String k : new String[] {"vix", "vix_3m", "vix_term_slope", "dgs10"}) {
+            assertTrue("macro." + k, macro.get(k).getAsJsonPrimitive().isNumber());
+        }
+        assertTrue("macro.hy_spread key", macro.has("hy_spread"));
+        assertTrue(macro.get("fed_funds").getAsJsonPrimitive().isNumber());
     }
 
     // Issue #1 — Nested response structures. Customer tried
