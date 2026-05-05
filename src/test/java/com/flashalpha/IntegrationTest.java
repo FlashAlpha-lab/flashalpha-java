@@ -726,14 +726,64 @@ public class IntegrationTest {
     }
 
     @Test
-    public void testExposureSummaryNetGexUnderExposures() {
+    public void testExposureSummaryEveryFieldDeclaredInPocoMustBeReferenced() {
         JsonObject r = client.exposureSummary("SPY");
+        // Original bug #1
         assertNull("net_gex must NOT be top-level on exposure_summary (customer trap)",
                 r.get("net_gex"));
-        assertTrue("exposures block missing", r.has("exposures"));
+        // ── top-level scalars ──
+        assertEquals("SPY", r.get("symbol").getAsString());
+        assertTrue(r.get("underlying_price").getAsJsonPrimitive().isNumber());
+        assertTrue(r.get("as_of").getAsJsonPrimitive().isString());
+        assertFalse(r.get("as_of").getAsString().isEmpty());
+        assertTrue(r.get("gamma_flip").getAsJsonPrimitive().isNumber());
+        String regime = r.get("regime").getAsString();
+        assertTrue("regime=" + regime,
+                java.util.Arrays.asList("positive_gamma", "negative_gamma", "neutral", "undetermined")
+                        .contains(regime));
+        // ── exposures block (4 fields) ──
         JsonObject exp = r.getAsJsonObject("exposures");
-        assertTrue("exposures.net_gex missing", exp.has("net_gex"));
-        assertTrue(exp.get("net_gex").getAsJsonPrimitive().isNumber());
+        for (String k : new String[] {"net_gex", "net_dex", "net_vex", "net_chex"}) {
+            assertTrue("exposures." + k, exp.get(k).getAsJsonPrimitive().isNumber());
+        }
+        // ── interpretation block (3 fields) ──
+        JsonObject interp = r.getAsJsonObject("interpretation");
+        for (String k : new String[] {"gamma", "vanna", "charm"}) {
+            assertTrue("interpretation." + k + " string",
+                    interp.get(k).getAsJsonPrimitive().isString());
+            assertFalse("interpretation." + k + " non-empty",
+                    interp.get(k).getAsString().isEmpty());
+        }
+        // ── hedging_estimate (every leaf on both sides) ──
+        JsonObject h = r.getAsJsonObject("hedging_estimate");
+        for (String sideKey : new String[] {"spot_up_1pct", "spot_down_1pct"}) {
+            JsonObject side = h.getAsJsonObject(sideKey);
+            String dir = side.get("direction").getAsString();
+            assertTrue(sideKey + ".direction=" + dir, "buy".equals(dir) || "sell".equals(dir));
+            assertTrue(sideKey + ".dealer_shares_to_trade",
+                    side.get("dealer_shares_to_trade").getAsJsonPrimitive().isNumber());
+            assertTrue(sideKey + ".notional_usd",
+                    side.get("notional_usd").getAsJsonPrimitive().isNumber());
+            assertNotEquals(0L, side.get("notional_usd").getAsLong());
+        }
+        long up = h.getAsJsonObject("spot_up_1pct").get("dealer_shares_to_trade").getAsLong();
+        long dn = h.getAsJsonObject("spot_down_1pct").get("dealer_shares_to_trade").getAsLong();
+        assertEquals(up, -dn);
+        // ── zero_dte block (3 fields) ──
+        JsonObject z = r.getAsJsonObject("zero_dte");
+        assertNotNull("zero_dte block", z);
+        assertTrue("zero_dte.net_gex key present", z.has("net_gex"));
+        assertTrue("zero_dte.net_gex null or number",
+                z.get("net_gex").isJsonNull()
+                        || z.get("net_gex").getAsJsonPrimitive().isNumber());
+        assertTrue("zero_dte.pct_of_total_gex key present", z.has("pct_of_total_gex"));
+        assertTrue("zero_dte.pct_of_total_gex null or number",
+                z.get("pct_of_total_gex").isJsonNull()
+                        || z.get("pct_of_total_gex").getAsJsonPrimitive().isNumber());
+        assertTrue("zero_dte.expiration key present", z.has("expiration"));
+        assertTrue("zero_dte.expiration null or string",
+                z.get("expiration").isJsonNull()
+                        || z.get("expiration").getAsJsonPrimitive().isString());
     }
 
     // Issue #2 — Field naming. Customer used put_vrp / call_vrp
