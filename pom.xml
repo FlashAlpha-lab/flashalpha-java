@@ -7,7 +7,7 @@
 
     <groupId>com.flashalpha</groupId>
     <artifactId>flashalpha</artifactId>
-    <version>0.4.0-RC3</version>
+    <version>0.4.0-RC4</version>
     <packaging>jar</packaging>
 
     <name>FlashAlpha Java SDK</name>
