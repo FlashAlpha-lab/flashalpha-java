@@ -53,7 +53,7 @@ public final class ZeroDteResponse {
     @SerializedName("time_to_close_hours")
     public Double timeToCloseHours;
 
-    /** Fraction of the trading day remaining (0.0 = at close, 1.0 = at open). Useful for time-weighting magnitudes that decay over the session. */
+    /** Percent of the regular trading day <b>elapsed</b> (0 = at the open, 100 = at the close). Range 0–100. Useful for time-weighting intraday metrics. */
     @SerializedName("time_to_close_pct")
     public Double timeToClosePct;
 
