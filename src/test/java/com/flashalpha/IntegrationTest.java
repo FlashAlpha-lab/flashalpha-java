@@ -502,6 +502,80 @@ public class IntegrationTest {
         }
     }
 
+    @Test
+    public void testMaxPainEveryFieldDeclaredInPocoMustBeReferenced() {
+        // 100% field-coverage discipline. Every leaf field declared in
+        // MaxPainResponse must be referenced by at least one assertion.
+        JsonObject r = client.maxPain("SPY");
+
+        // ── top-level scalars ──
+        assertEquals("SPY", r.get("symbol").getAsString());
+        assertTrue(r.get("underlying_price").getAsJsonPrimitive().isNumber());
+        assertTrue(r.get("as_of").getAsJsonPrimitive().isString());
+        assertTrue(r.get("max_pain_strike").getAsJsonPrimitive().isNumber());
+        String signal = r.get("signal").getAsString();
+        assertTrue("signal=" + signal,
+                "bullish".equals(signal) || "bearish".equals(signal) || "neutral".equals(signal));
+        assertTrue(r.get("expiration").getAsJsonPrimitive().isString());
+        assertTrue(r.get("put_call_oi_ratio").getAsJsonPrimitive().isNumber());
+        String regime = r.get("regime").getAsString();
+        assertTrue("regime=" + regime,
+                "positive_gamma".equals(regime) || "negative_gamma".equals(regime)
+                        || "neutral".equals(regime) || "undetermined".equals(regime));
+        int pin = r.get("pin_probability").getAsInt();
+        assertTrue("pin_probability range", pin >= 0 && pin <= 100);
+
+        // ── distance{absolute, percent, direction} ──
+        JsonObject dist = r.getAsJsonObject("distance");
+        assertTrue(dist.get("absolute").getAsJsonPrimitive().isNumber());
+        assertTrue(dist.get("percent").getAsJsonPrimitive().isNumber());
+        String direction = dist.get("direction").getAsString();
+        assertTrue("direction=" + direction,
+                "above".equals(direction) || "below".equals(direction) || "at".equals(direction));
+
+        // ── pain_curve[] ──
+        JsonArray pc = r.getAsJsonArray("pain_curve");
+        assertTrue("pain_curve non-empty", pc.size() > 0);
+        JsonObject pcRow = pc.get(0).getAsJsonObject();
+        for (String k : new String[]{"strike", "call_pain", "put_pain", "total_pain"}) {
+            assertTrue("pain_curve[0]." + k, pcRow.get(k).getAsJsonPrimitive().isNumber());
+        }
+
+        // ── oi_by_strike[] ──
+        JsonArray oi = r.getAsJsonArray("oi_by_strike");
+        assertTrue("oi_by_strike non-empty", oi.size() > 0);
+        JsonObject oiRow = oi.get(0).getAsJsonObject();
+        for (String k : new String[]{"strike", "call_oi", "put_oi", "total_oi", "call_volume", "put_volume"}) {
+            assertTrue("oi_by_strike[0]." + k, oiRow.get(k).getAsJsonPrimitive().isNumber());
+        }
+
+        // ── max_pain_by_expiration[] (no expiration filter on this call) ──
+        JsonArray mpe = r.getAsJsonArray("max_pain_by_expiration");
+        assertTrue("max_pain_by_expiration non-empty", mpe.size() > 0);
+        JsonObject mpeRow = mpe.get(0).getAsJsonObject();
+        assertTrue(mpeRow.get("expiration").getAsJsonPrimitive().isString());
+        assertTrue(mpeRow.get("max_pain_strike").getAsJsonPrimitive().isNumber());
+        assertTrue(mpeRow.get("dte").getAsJsonPrimitive().isNumber());
+        assertTrue(mpeRow.get("total_oi").getAsJsonPrimitive().isNumber());
+
+        // ── dealer_alignment ──
+        JsonObject da = r.getAsJsonObject("dealer_alignment");
+        String alignment = da.get("alignment").getAsString();
+        assertTrue("alignment=" + alignment,
+                "converging".equals(alignment) || "moderate".equals(alignment)
+                        || "diverging".equals(alignment) || "unknown".equals(alignment));
+        assertTrue(da.get("description").getAsJsonPrimitive().isString());
+        for (String k : new String[]{"gamma_flip", "call_wall", "put_wall"}) {
+            assertTrue("dealer_alignment." + k, da.get(k).getAsJsonPrimitive().isNumber());
+        }
+
+        // ── expected_move ──
+        JsonObject em = r.getAsJsonObject("expected_move");
+        assertTrue(em.get("straddle_price").getAsJsonPrimitive().isNumber());
+        assertTrue(em.get("atm_iv").getAsJsonPrimitive().isNumber());
+        assertTrue(em.get("max_pain_within_expected_range").getAsJsonPrimitive().isBoolean());
+    }
+
     // ── Screener ──────────────────────────────────────────────────────
 
     @Test
