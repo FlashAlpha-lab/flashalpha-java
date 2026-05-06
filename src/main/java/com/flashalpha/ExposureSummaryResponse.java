@@ -33,7 +33,7 @@ public final class ExposureSummaryResponse {
     @SerializedName("gamma_flip")
     public Double gammaFlip;
 
-    /** One of "positive_gamma", "negative_gamma", "neutral", "undetermined". */
+    /** One of "positive_gamma", "negative_gamma", "unknown". */
     @SerializedName("regime")
     public String regime;
 

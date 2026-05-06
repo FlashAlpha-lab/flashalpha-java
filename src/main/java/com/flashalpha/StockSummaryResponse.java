@@ -202,7 +202,7 @@ public final class StockSummaryResponse {
         /**
          * Dealer gamma regime: one of
          * {@code "positive_gamma"} | {@code "negative_gamma"} |
-         * {@code "undetermined"}.
+         * {@code "unknown"}.
          */
         @SerializedName("regime") public String regime;
 

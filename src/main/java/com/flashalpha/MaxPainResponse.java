@@ -77,7 +77,7 @@ public class MaxPainResponse {
     /**
      * Same gamma classification as on {@code exposure_summary.regime}:
      * {@code "positive_gamma"} | {@code "negative_gamma"} |
-     * {@code "neutral"} | {@code "undetermined"}.
+     * {@code "unknown"}.
      */
     @SerializedName("regime")
     public String regime;
