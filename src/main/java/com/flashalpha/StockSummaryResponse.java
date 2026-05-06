@@ -259,7 +259,7 @@ public final class StockSummaryResponse {
         /** Net dealer gamma exposure (dollars per 1% spot) at the 0DTE expiration. */
         @SerializedName("net_gex") public Double netGex;
         /** 0DTE GEX as a percent of full-chain total (0-100). */
-        @SerializedName("pct_of_total_gex") public Double pctOfTotalGex;
+        @SerializedName("pct_of_total") public Double pctOfTotal;
         /** ISO date of the 0DTE expiration this fragment summarises. */
         @SerializedName("expiration") public String expiration;
     }
@@ -297,7 +297,7 @@ public final class StockSummaryResponse {
 
         /**
          * VIX-futures block. Note: {@link VixFutures#basis} is approximated
-         * from {@link VixTermStructure#vix3m} vs VIX spot (NOT actual
+         * from {@link VixTermLevels#vix3m} vs VIX spot (NOT actual
          * front-month VIX futures prices) — useful as a proxy but
          * different from a real VX1 / VX2 contango readout.
          */
@@ -318,18 +318,22 @@ public final class StockSummaryResponse {
     public static final class VixTermStructure {
         /** Sub-block of named tenor levels. */
         @SerializedName("levels") public VixTermLevels levels;
-        /** {@code (vix3m - vix) / vix * 100}. Positive = contango. */
-        @SerializedName("slope") public Double slope;
-        /** Plain-English regime label (e.g. {@code "contango"} / {@code "backwardation"} / {@code "flat"}). */
-        @SerializedName("regime") public String regime;
+        /** Near-tenor slope: {@code (vix3m - vix) / vix * 100}. Positive = contango. */
+        @SerializedName("near_slope_pct") public Double nearSlopePct;
+        /** Plain-English structure label (e.g. {@code "contango"} / {@code "backwardation"}). */
+        @SerializedName("structure") public String structure;
     }
 
     /** Named VIX term-structure level points. */
     public static final class VixTermLevels {
+        /** VIX9D (9-day VIX). */
+        @SerializedName("vix9d") public Double vix9d;
+        /** VIX (30-day, the standard headline VIX index). */
         @SerializedName("vix")   public Double vix;
+        /** VIX3M (3-month VIX). */
         @SerializedName("vix3m") public Double vix3m;
+        /** VIX6M (6-month VIX). */
         @SerializedName("vix6m") public Double vix6m;
-        @SerializedName("vix9m") public Double vix9m;
     }
 
     /**
@@ -339,17 +343,23 @@ public final class StockSummaryResponse {
      * real front-month futures price. Treat it as a directional proxy.
      */
     public static final class VixFutures {
-        /** Approximated basis (VIX3M − VIX). */
-        @SerializedName("basis") public Double basis;
-        /** Plain-English regime label. */
-        @SerializedName("regime") public String regime;
+        /** Front-month VIX futures price (proxied from VIX3M). */
+        @SerializedName("front_month") public Double frontMonth;
+        /** Spot VIX. */
+        @SerializedName("spot") public Double spot;
+        /** {@code front_month - spot}. */
+        @SerializedName("spread") public Double spread;
+        /** Basis as a percent of spot: {@code (front_month - spot) / spot * 100}. */
+        @SerializedName("basis_pct") public Double basisPct;
+        /** Plain-English structure label: {@code "contango"} or {@code "backwardation"}. */
+        @SerializedName("basis") public String basis;
     }
 
     /** Fear-and-greed composite. */
     public static final class FearAndGreed {
         /** 0-100 score. */
-        @SerializedName("value") public Integer value;
-        /** Bucket label (e.g. {@code "extreme_fear"}, {@code "neutral"}, {@code "extreme_greed"}). */
+        @SerializedName("score") public Integer score;
+        /** Bucket label (e.g. {@code "Extreme Fear"}, {@code "Neutral"}, {@code "Extreme Greed"}). */
         @SerializedName("rating") public String rating;
     }
 }
