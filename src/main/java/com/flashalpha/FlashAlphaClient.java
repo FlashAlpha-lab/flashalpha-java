@@ -266,6 +266,18 @@ public class FlashAlphaClient {
         return get("/v1/stock/" + _seg(symbol) + "/summary");
     }
 
+    /**
+     * Strongly-typed variant of {@link #stockSummary(String)}. Returns a
+     * populated {@link StockSummaryResponse} with named fields. The original
+     * untyped method is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public StockSummaryResponse stockSummaryTyped(String symbol) {
+        JsonObject raw = stockSummary(symbol);
+        return gson.fromJson(raw, StockSummaryResponse.class);
+    }
+
     // ── Historical ────────────────────────────────────────────────────
 
     /**
@@ -401,6 +413,18 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #exposureLevels(String)}. Returns a
+     * populated {@link ExposureLevelsResponse} with named fields. The original
+     * untyped method is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public ExposureLevelsResponse exposureLevelsTyped(String symbol) {
+        JsonObject raw = exposureLevels(symbol);
+        return gson.fromJson(raw, ExposureLevelsResponse.class);
+    }
+
+    /**
      * Full exposure summary (GEX/DEX/VEX/CHEX + hedging analysis).
      * Requires Growth+ plan.
      *
@@ -411,12 +435,36 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #exposureSummary(String)}. Returns a
+     * populated {@link ExposureSummaryResponse} with named fields. The original
+     * untyped method is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public ExposureSummaryResponse exposureSummaryTyped(String symbol) {
+        JsonObject raw = exposureSummary(symbol);
+        return gson.fromJson(raw, ExposureSummaryResponse.class);
+    }
+
+    /**
      * Verbal narrative analysis of options exposure. Requires Growth+ plan.
      *
      * @param symbol Underlying symbol.
      */
     public JsonObject narrative(String symbol) {
         return get("/v1/exposure/narrative/" + _seg(symbol));
+    }
+
+    /**
+     * Strongly-typed variant of {@link #narrative(String)}. Returns a populated
+     * {@link NarrativeResponse} with named fields. The original untyped method
+     * is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public NarrativeResponse narrativeTyped(String symbol) {
+        JsonObject raw = narrative(symbol);
+        return gson.fromJson(raw, NarrativeResponse.class);
     }
 
     /**
@@ -510,6 +558,55 @@ public class FlashAlphaClient {
         if (r != null) params.put("r", String.valueOf(r));
         if (q != null) params.put("q", String.valueOf(q));
         return get("/v1/pricing/greeks", params);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #greeks(double, double, double, double, String, Double, Double)}.
+     * Returns a populated {@link PricingGreeksResponse}. The original untyped
+     * method is unchanged.
+     *
+     * @param spot   Current underlying price.
+     * @param strike Option strike price.
+     * @param dte    Days to expiration.
+     * @param sigma  Annualised implied volatility (decimal, e.g. {@code 0.25}).
+     * @param type   Option type: {@code "call"} or {@code "put"}.
+     * @param r      Risk-free rate (nullable; API default used if null).
+     * @param q      Continuous dividend yield (nullable; API default used if null).
+     */
+    public PricingGreeksResponse greeksTyped(double spot, double strike, double dte, double sigma,
+                                             String type, Double r, Double q) {
+        JsonObject raw = greeks(spot, strike, dte, sigma, type, r, q);
+        return gson.fromJson(raw, PricingGreeksResponse.class);
+    }
+
+    /**
+     * Strongly-typed convenience overload of
+     * {@link #greeksTyped(double, double, double, double, String, Double, Double)}
+     * with explicit option type and API-default rate / yield.
+     *
+     * @param spot   Current underlying price.
+     * @param strike Option strike price.
+     * @param dte    Days to expiration.
+     * @param sigma  Annualised implied volatility (decimal, e.g. {@code 0.25}).
+     * @param type   Option type: {@code "call"} or {@code "put"}.
+     */
+    public PricingGreeksResponse greeksTyped(double spot, double strike, double dte, double sigma,
+                                             String type) {
+        return greeksTyped(spot, strike, dte, sigma, type, null, null);
+    }
+
+    /**
+     * Strongly-typed convenience overload of
+     * {@link #greeksTyped(double, double, double, double, String, Double, Double)}
+     * defaulting to {@code type="call"} and API-default rate / yield.
+     *
+     * @param spot   Current underlying price.
+     * @param strike Option strike price.
+     * @param dte    Days to expiration.
+     * @param sigma  Annualised implied volatility (decimal, e.g. {@code 0.25}).
+     */
+    public PricingGreeksResponse greeksTyped(double spot, double strike, double dte, double sigma) {
+        return greeksTyped(spot, strike, dte, sigma, "call", null, null);
     }
 
     /**
@@ -638,6 +735,29 @@ public class FlashAlphaClient {
         return get("/v1/maxpain/" + _seg(symbol), params.isEmpty() ? null : params);
     }
 
+    /**
+     * Strongly-typed variant of {@link #maxPain(String)}. Returns a populated
+     * {@link MaxPainResponse} with named fields. The original untyped method
+     * is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public MaxPainResponse maxPainTyped(String symbol) {
+        return maxPainTyped(symbol, null);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #maxPain(String, String)} filtered to a
+     * single expiry.
+     *
+     * @param symbol     Underlying symbol.
+     * @param expiration Expiration date filter (nullable, format {@code yyyy-MM-dd}).
+     */
+    public MaxPainResponse maxPainTyped(String symbol, String expiration) {
+        JsonObject raw = maxPain(symbol, expiration);
+        return gson.fromJson(raw, MaxPainResponse.class);
+    }
+
     // ── VRP (Variance Risk Premium) ───────────────────────────────────
 
     /**
@@ -677,6 +797,19 @@ public class FlashAlphaClient {
      */
     public JsonObject vrp(String symbol) {
         return get("/v1/vrp/" + _seg(symbol));
+    }
+
+    /**
+     * Strongly-typed variant of {@link #vrp(String)}. Returns a populated
+     * {@link VrpResponse} with named fields for the nested VRP, directional,
+     * regime, gex_conditioned, strategy_scores, and term_vrp groups. The
+     * original untyped method is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public VrpResponse vrpTyped(String symbol) {
+        JsonObject raw = vrp(symbol);
+        return gson.fromJson(raw, VrpResponse.class);
     }
 
     // ── Screener ──────────────────────────────────────────────────────
