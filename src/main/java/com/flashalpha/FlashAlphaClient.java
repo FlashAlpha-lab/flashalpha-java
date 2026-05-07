@@ -774,6 +774,41 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #iv(double, double, double, double, String, Double, Double)}.
+     * Returns a populated {@link PricingIvResponse}. The original untyped
+     * method is unchanged.
+     *
+     * @param spot   Current underlying price.
+     * @param strike Option strike price.
+     * @param dte    Days to expiration.
+     * @param price  Market price of the option.
+     * @param type   Option type: {@code "call"} or {@code "put"}.
+     * @param r      Risk-free rate (nullable).
+     * @param q      Continuous dividend yield (nullable).
+     */
+    public PricingIvResponse ivTyped(double spot, double strike, double dte, double price,
+                                     String type, Double r, Double q) {
+        JsonObject raw = iv(spot, strike, dte, price, type, r, q);
+        return gson.fromJson(raw, PricingIvResponse.class);
+    }
+
+    /**
+     * Strongly-typed convenience overload of
+     * {@link #ivTyped(double, double, double, double, String, Double, Double)}
+     * with API-default rate / yield.
+     *
+     * @param spot   Current underlying price.
+     * @param strike Option strike price.
+     * @param dte    Days to expiration.
+     * @param price  Market price of the option.
+     * @param type   Option type: {@code "call"} or {@code "put"}.
+     */
+    public PricingIvResponse ivTyped(double spot, double strike, double dte, double price,
+                                     String type) {
+        return ivTyped(spot, strike, dte, price, type, null, null);
+    }
+
+    /**
      * Kelly criterion optimal position sizing. Requires Growth+ plan.
      *
      * @param spot    Current underlying price.
@@ -799,6 +834,46 @@ public class FlashAlphaClient {
         if (r != null) params.put("r", String.valueOf(r));
         if (q != null) params.put("q", String.valueOf(q));
         return get("/v1/pricing/kelly", params);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #kelly(double, double, double, double, double, double, String, Double, Double)}.
+     * Returns a populated {@link PricingKellyResponse}. The original untyped
+     * method is unchanged.
+     *
+     * @param spot    Current underlying price.
+     * @param strike  Option strike price.
+     * @param dte     Days to expiration.
+     * @param sigma   Annualised implied volatility.
+     * @param premium Option premium paid.
+     * @param mu      Expected annualised return of the underlying.
+     * @param type    Option type: {@code "call"} or {@code "put"}.
+     * @param r       Risk-free rate (nullable).
+     * @param q       Continuous dividend yield (nullable).
+     */
+    public PricingKellyResponse kellyTyped(double spot, double strike, double dte, double sigma,
+                                           double premium, double mu, String type,
+                                           Double r, Double q) {
+        JsonObject raw = kelly(spot, strike, dte, sigma, premium, mu, type, r, q);
+        return gson.fromJson(raw, PricingKellyResponse.class);
+    }
+
+    /**
+     * Strongly-typed convenience overload of
+     * {@link #kellyTyped(double, double, double, double, double, double, String, Double, Double)}
+     * with API-default rate / yield.
+     *
+     * @param spot    Current underlying price.
+     * @param strike  Option strike price.
+     * @param dte     Days to expiration.
+     * @param sigma   Annualised implied volatility.
+     * @param premium Option premium paid.
+     * @param mu      Expected annualised return of the underlying.
+     * @param type    Option type: {@code "call"} or {@code "put"}.
+     */
+    public PricingKellyResponse kellyTyped(double spot, double strike, double dte, double sigma,
+                                           double premium, double mu, String type) {
+        return kellyTyped(spot, strike, dte, sigma, premium, mu, type, null, null);
     }
 
     // ── Volatility Analytics ──────────────────────────────────────────
@@ -862,6 +937,15 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #tickers()}. Returns a populated
+     * {@link TickersResponse}. The original untyped method is unchanged.
+     */
+    public TickersResponse tickersTyped() {
+        JsonObject raw = tickers();
+        return gson.fromJson(raw, TickersResponse.class);
+    }
+
+    /**
      * Option chain metadata (expirations and strikes) for a given ticker.
      *
      * @param ticker Stock ticker symbol.
@@ -871,10 +955,30 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #options(String)}. Returns a populated
+     * {@link OptionsMetaResponse}. The original untyped method is unchanged.
+     *
+     * @param ticker Stock ticker symbol.
+     */
+    public OptionsMetaResponse optionsTyped(String ticker) {
+        JsonObject raw = options(ticker);
+        return gson.fromJson(raw, OptionsMetaResponse.class);
+    }
+
+    /**
      * Currently queried symbols with live data available.
      */
     public JsonObject symbols() {
         return get("/v1/symbols");
+    }
+
+    /**
+     * Strongly-typed variant of {@link #symbols()}. Returns a populated
+     * {@link SymbolsResponse}. The original untyped method is unchanged.
+     */
+    public SymbolsResponse symbolsTyped() {
+        JsonObject raw = symbols();
+        return gson.fromJson(raw, SymbolsResponse.class);
     }
 
     // ── Account & System ──────────────────────────────────────────────
@@ -1021,6 +1125,29 @@ public class FlashAlphaClient {
         return post("/v1/screener", body);
     }
 
+    /**
+     * Strongly-typed variant of {@link #screener(Map)}. Returns a populated
+     * {@link ScreenerResponse} — {@code meta} is fully typed; {@code data}
+     * rows are kept as raw {@link JsonObject} because the column shape
+     * depends on the request {@code select} clause and tier.
+     *
+     * @param body Request body. See the Screener spec for the full schema.
+     */
+    public ScreenerResponse screenerTyped(Map<String, Object> body) {
+        JsonObject raw = screener(body);
+        return gson.fromJson(raw, ScreenerResponse.class);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #screener(Object)}.
+     *
+     * @param body Request body (POJO or {@link com.google.gson.JsonObject}).
+     */
+    public ScreenerResponse screenerTyped(Object body) {
+        JsonObject raw = screener(body);
+        return gson.fromJson(raw, ScreenerResponse.class);
+    }
+
     // ── Account & System ──────────────────────────────────────────────
 
     /**
@@ -1031,9 +1158,27 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #account()}. Returns a populated
+     * {@link AccountResponse}. The original untyped method is unchanged.
+     */
+    public AccountResponse accountTyped() {
+        JsonObject raw = account();
+        return gson.fromJson(raw, AccountResponse.class);
+    }
+
+    /**
      * API health check (public endpoint, no auth required).
      */
     public JsonObject health() {
         return get("/health");
+    }
+
+    /**
+     * Strongly-typed variant of {@link #health()}. Returns a populated
+     * {@link HealthResponse}. The original untyped method is unchanged.
+     */
+    public HealthResponse healthTyped() {
+        JsonObject raw = health();
+        return gson.fromJson(raw, HealthResponse.class);
     }
 }
