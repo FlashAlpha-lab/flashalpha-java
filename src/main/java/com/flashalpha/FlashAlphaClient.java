@@ -222,6 +222,18 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #stockQuote(String)}. Returns a
+     * populated {@link StockQuoteResponse} with named fields. The original
+     * untyped method is unchanged.
+     *
+     * @param ticker Stock ticker symbol.
+     */
+    public StockQuoteResponse stockQuoteTyped(String ticker) {
+        JsonObject raw = stockQuote(ticker);
+        return gson.fromJson(raw, StockQuoteResponse.class);
+    }
+
+    /**
      * Option quotes with greeks for all contracts on {@code ticker}.
      * Requires Growth+ plan.
      *
@@ -249,12 +261,55 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #optionQuote(String, String, Double, String)}.
+     * Returns a populated {@link OptionQuoteResponse} when all three filters
+     * ({@code expiry} + {@code strike} + {@code type}) are supplied. For
+     * less-specific calls the API returns an array; in that case prefer the
+     * raw {@link #optionQuote(String, String, Double, String)} method and
+     * deserialize each element with the configured {@link Gson} instance.
+     *
+     * @param ticker Stock ticker symbol.
+     * @param expiry Expiration date filter (must be non-null for a single-object response).
+     * @param strike Strike price filter (must be non-null for a single-object response).
+     * @param type   Option type filter (must be non-null for a single-object response).
+     */
+    public OptionQuoteResponse optionQuoteTyped(String ticker, String expiry, Double strike, String type) {
+        JsonObject raw = optionQuote(ticker, expiry, strike, type);
+        return gson.fromJson(raw, OptionQuoteResponse.class);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #optionQuote(String)} returning a
+     * single populated {@link OptionQuoteResponse}. Note: when no
+     * {@code expiry} / {@code strike} / {@code type} filters are supplied
+     * the live API returns an array — prefer the parameterised
+     * {@link #optionQuoteTyped(String, String, Double, String)} overload.
+     *
+     * @param ticker Stock ticker symbol.
+     */
+    public OptionQuoteResponse optionQuoteTyped(String ticker) {
+        return optionQuoteTyped(ticker, null, null, null);
+    }
+
+    /**
      * Volatility surface grid (public endpoint, no auth required).
      *
      * @param symbol Underlying symbol.
      */
     public JsonObject surface(String symbol) {
         return get("/v1/surface/" + _seg(symbol));
+    }
+
+    /**
+     * Strongly-typed variant of {@link #surface(String)}. Returns a populated
+     * {@link SurfaceResponse} with named fields. The original untyped method
+     * is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public SurfaceResponse surfaceTyped(String symbol) {
+        JsonObject raw = surface(symbol);
+        return gson.fromJson(raw, SurfaceResponse.class);
     }
 
     /**
@@ -341,6 +396,28 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #gex(String)}. Returns a populated
+     * {@link GexResponse}. The original untyped method is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public GexResponse gexTyped(String symbol) {
+        return gexTyped(symbol, null, null);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #gex(String, String, Integer)}.
+     *
+     * @param symbol     Underlying symbol.
+     * @param expiration Expiration date filter (nullable).
+     * @param minOi      Minimum open interest filter (nullable).
+     */
+    public GexResponse gexTyped(String symbol, String expiration, Integer minOi) {
+        JsonObject raw = gex(symbol, expiration, minOi);
+        return gson.fromJson(raw, GexResponse.class);
+    }
+
+    /**
      * Delta exposure (DEX) by strike.
      *
      * @param symbol Underlying symbol.
@@ -359,6 +436,27 @@ public class FlashAlphaClient {
         Map<String, String> params = new LinkedHashMap<>();
         if (expiration != null) params.put("expiration", expiration);
         return get("/v1/exposure/dex/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #dex(String)}. Returns a populated
+     * {@link DexResponse}. The original untyped method is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public DexResponse dexTyped(String symbol) {
+        return dexTyped(symbol, null);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #dex(String, String)}.
+     *
+     * @param symbol     Underlying symbol.
+     * @param expiration Expiration date filter (nullable).
+     */
+    public DexResponse dexTyped(String symbol, String expiration) {
+        JsonObject raw = dex(symbol, expiration);
+        return gson.fromJson(raw, DexResponse.class);
     }
 
     /**
@@ -383,6 +481,27 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #vex(String)}. Returns a populated
+     * {@link VexResponse}. The original untyped method is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public VexResponse vexTyped(String symbol) {
+        return vexTyped(symbol, null);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #vex(String, String)}.
+     *
+     * @param symbol     Underlying symbol.
+     * @param expiration Expiration date filter (nullable).
+     */
+    public VexResponse vexTyped(String symbol, String expiration) {
+        JsonObject raw = vex(symbol, expiration);
+        return gson.fromJson(raw, VexResponse.class);
+    }
+
+    /**
      * Charm exposure (CHEX) by strike.
      *
      * @param symbol Underlying symbol.
@@ -401,6 +520,27 @@ public class FlashAlphaClient {
         Map<String, String> params = new LinkedHashMap<>();
         if (expiration != null) params.put("expiration", expiration);
         return get("/v1/exposure/chex/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #chex(String)}. Returns a populated
+     * {@link ChexResponse}. The original untyped method is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public ChexResponse chexTyped(String symbol) {
+        return chexTyped(symbol, null);
+    }
+
+    /**
+     * Strongly-typed variant of {@link #chex(String, String)}.
+     *
+     * @param symbol     Underlying symbol.
+     * @param expiration Expiration date filter (nullable).
+     */
+    public ChexResponse chexTyped(String symbol, String expiration) {
+        JsonObject raw = chex(symbol, expiration);
+        return gson.fromJson(raw, ChexResponse.class);
     }
 
     /**
@@ -674,6 +814,21 @@ public class FlashAlphaClient {
     }
 
     /**
+     * Strongly-typed variant of {@link #volatility(String)}. Returns a
+     * populated {@link VolatilityResponse} with named fields for the
+     * realized-vol ladder, IV-RV spreads, skew profiles, term structure,
+     * GEX / theta by DTE, put-call profile, OI concentration, hedging
+     * scenarios, and liquidity blocks. The original untyped method is
+     * unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public VolatilityResponse volatilityTyped(String symbol) {
+        JsonObject raw = volatility(symbol);
+        return gson.fromJson(raw, VolatilityResponse.class);
+    }
+
+    /**
      * Advanced volatility analytics: SVI parameters, variance surface, arbitrage
      * detection, greeks surfaces, and variance swap. Requires Alpha+ plan.
      *
@@ -681,6 +836,20 @@ public class FlashAlphaClient {
      */
     public JsonObject advVolatility(String symbol) {
         return get("/v1/adv_volatility/" + _seg(symbol));
+    }
+
+    /**
+     * Strongly-typed variant of {@link #advVolatility(String)}. Returns a
+     * populated {@link AdvVolatilityResponse} with named fields for the
+     * SVI parameters, forward prices, total variance surface, arbitrage
+     * flags, variance-swap fair values, and greeks surfaces blocks. The
+     * original untyped method is unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public AdvVolatilityResponse advVolatilityTyped(String symbol) {
+        JsonObject raw = advVolatility(symbol);
+        return gson.fromJson(raw, AdvVolatilityResponse.class);
     }
 
     // ── Reference Data ────────────────────────────────────────────────
