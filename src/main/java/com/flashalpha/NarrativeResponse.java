@@ -85,7 +85,7 @@ public final class NarrativeResponse {
         /**
          * Dealer gamma regime label —
          * {@code "positive_gamma"} | {@code "negative_gamma"} |
-         * {@code "undetermined"}.
+         * {@code "unknown"}.
          */
         @SerializedName("regime") public String regime;
         /** 0DTE share of total chain GEX (0-100). */

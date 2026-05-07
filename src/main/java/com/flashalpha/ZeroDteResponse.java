@@ -135,13 +135,10 @@ public final class ZeroDteResponse {
      */
     public static final class Regime {
         /**
-         * Dealer gamma regime label.
-         *
-         * <p>Live values: {@code "positive_gamma"} (spot &gt; flip — dealers
-         * long gamma, hedge-the-tape, vol-dampening) or {@code "negative_gamma"}
-         * (spot &lt; flip — dealers short gamma, hedge-with-the-tape,
-         * trend-amplifying). May also surface {@code "neutral"} or
-         * {@code "undetermined"} in edge cases.
+         * Dealer gamma regime label — {@code "positive_gamma"} (spot &gt;
+         * flip — dealers long gamma, hedge-the-tape, vol-dampening) or
+         * {@code "negative_gamma"} (spot &lt; flip — dealers short gamma,
+         * hedge-with-the-tape, trend-amplifying).
          */
         @SerializedName("label") public String label;
 
