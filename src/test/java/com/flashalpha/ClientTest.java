@@ -527,22 +527,6 @@ public class ClientTest {
         assertTrue(req.getPath().contains("strike_range=0.05"));
     }
 
-    @Test
-    public void testExposureHistoryNoParams() throws Exception {
-        enqueueOk();
-        client.exposureHistory("SPY");
-        RecordedRequest req = server.takeRequest();
-        assertEquals("/v1/exposure/history/SPY", req.getPath());
-    }
-
-    @Test
-    public void testExposureHistoryWithDays() throws Exception {
-        enqueueOk();
-        client.exposureHistory("SPY", 30);
-        RecordedRequest req = server.takeRequest();
-        assertTrue(req.getPath().contains("days=30"));
-    }
-
     // ── Pricing ────────────────────────────────────────────────────────
 
     @Test

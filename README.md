@@ -158,8 +158,35 @@ All methods return `com.google.gson.JsonObject`.
 | `zeroDte(symbol, strikeRange)` | 0DTE analytics with custom strike range | Growth+ |
 | `maxPain(symbol)` | Max pain analysis with dealer alignment, pain curve, pin probability | Growth+ |
 | `maxPain(symbol, expiration)` | Max pain for a single expiry | Growth+ |
-| `exposureHistory(symbol)` | Daily exposure snapshots | Growth+ |
-| `exposureHistory(symbol, days)` | Daily exposure snapshots with day count | Growth+ |
+
+### Flow (live, simulation-aware) — requires the Alpha plan
+
+Each method has a strongly-typed `*Typed` variant (e.g. `flowLevelsTyped`).
+
+| Method | Description |
+|--------|-------------|
+| `flowLevels(symbol[, expiry])` | Live gamma flip / call & put walls / max pain |
+| `flowPinRisk(symbol[, expiry])` | 0DTE pin-risk score + component breakdown |
+| `flowSummary(symbol[, expiry])` | At-a-glance flow direction + headline GEX shift |
+| `flowOi(symbol[, expiry])` | Open-interest simulator state (official vs intraday) |
+| `flowGex(symbol[, expiry])` | Live (flow-adjusted) GEX + per-strike profile |
+| `flowDex(symbol[, expiry])` | Live (flow-adjusted) DEX + per-strike profile |
+| `flowDealerRisk(symbol[, expiry])` | Settled-vs-live dealer GEX/DEX + flow adjustment |
+| `flowLive(symbol[, expiry])` | Everything-at-once live flow bundle |
+| `flowOptionRecent(symbol, limit, expiry)` | Recent option trades, newest-first |
+| `flowOptionSummary(symbol, expiry)` | Per-underlying option-flow aggregates |
+| `flowOptionBlocks(symbol, minSize, expiry)` | Large option prints (`size >= minSize`) |
+| `flowOptionHistory(symbol, minutes, expiry)` | Per-minute option-flow buckets |
+| `flowOptionCumulative(symbol, minutes, expiry)` | Cumulative option net-flow series |
+| `flowStockRecent(symbol, limit)` | Recent stock trades, newest-first |
+| `flowStockSummary(symbol)` | Per-symbol stock-flow aggregates |
+| `flowStockBlocks(symbol, minSize)` | Large stock prints (`size >= minSize`) |
+| `flowStockHistory(symbol, minutes)` | Per-minute stock-flow buckets w/ OHLC |
+| `flowStockCumulative(symbol, minutes)` | Cumulative stock net-flow series |
+| `flowOptionsLeaderboard(n, windowMinutes)` | Cross-symbol option-flow leaderboard |
+| `flowOptionsOutliers(limit, minTrades, windowMinutes)` | Cross-symbol option-flow outliers |
+| `flowStocksLeaderboard(n, windowMinutes)` | Cross-symbol stock-flow leaderboard |
+| `flowStocksOutliers(limit, minTrades, windowMinutes)` | Cross-symbol stock-flow outliers |
 
 ### Pricing and position sizing
 

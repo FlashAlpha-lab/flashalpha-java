@@ -653,25 +653,331 @@ public class FlashAlphaClient {
         return gson.fromJson(raw, ZeroDteResponse.class);
     }
 
-    /**
-     * Daily exposure snapshots for trend analysis. Requires Growth+ plan.
-     *
-     * @param symbol Underlying symbol.
-     */
-    public JsonObject exposureHistory(String symbol) {
-        return exposureHistory(symbol, null);
+    // ── Flow (live, simulation-aware) — requires the Alpha plan ────────
+    //
+    // Analytics endpoints (snake_case) fold today's intraday trade tape
+    // into the settled book. All accept an optional expiry ("YYYY-MM-DD").
+    // Each untyped method returns a JsonObject; the matching *Typed method
+    // deserializes into the POJO. Raw flow endpoints proxy camelCase JSON.
+
+    /** Live gamma flip / call &amp; put walls / max pain. Requires the Alpha plan. */
+    public JsonObject flowLevels(String symbol) { return flowLevels(symbol, null); }
+
+    /** Live levels, sliced to one expiration cycle ({@code expiry}, nullable). Requires Alpha. */
+    public JsonObject flowLevels(String symbol, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/levels/" + _seg(symbol), params.isEmpty() ? null : params);
     }
 
-    /**
-     * Daily exposure snapshots for trend analysis. Requires Growth+ plan.
-     *
-     * @param symbol Underlying symbol.
-     * @param days   Number of days of history to return (nullable = API default).
-     */
-    public JsonObject exposureHistory(String symbol, Integer days) {
+    /** Strongly-typed variant of {@link #flowLevels(String)}. */
+    public FlowLevelsResponse flowLevelsTyped(String symbol) { return flowLevelsTyped(symbol, null); }
+
+    /** Strongly-typed variant of {@link #flowLevels(String, String)}. */
+    public FlowLevelsResponse flowLevelsTyped(String symbol, String expiry) {
+        return gson.fromJson(flowLevels(symbol, expiry), FlowLevelsResponse.class);
+    }
+
+    /** 0DTE pin-risk score + component breakdown. Requires the Alpha plan. */
+    public JsonObject flowPinRisk(String symbol) { return flowPinRisk(symbol, null); }
+
+    /** Pin risk, sliced to one expiration cycle ({@code expiry}, nullable). Requires Alpha. */
+    public JsonObject flowPinRisk(String symbol, String expiry) {
         Map<String, String> params = new LinkedHashMap<>();
-        if (days != null) params.put("days", String.valueOf(days));
-        return get("/v1/exposure/history/" + _seg(symbol), params.isEmpty() ? null : params);
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/pin-risk/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowPinRisk(String)}. */
+    public FlowPinRiskResponse flowPinRiskTyped(String symbol) { return flowPinRiskTyped(symbol, null); }
+
+    /** Strongly-typed variant of {@link #flowPinRisk(String, String)}. */
+    public FlowPinRiskResponse flowPinRiskTyped(String symbol, String expiry) {
+        return gson.fromJson(flowPinRisk(symbol, expiry), FlowPinRiskResponse.class);
+    }
+
+    /** At-a-glance flow direction + headline GEX shift. Requires the Alpha plan. */
+    public JsonObject flowSummary(String symbol) { return flowSummary(symbol, null); }
+
+    /** Flow summary, sliced to one expiration cycle ({@code expiry}, nullable). Requires Alpha. */
+    public JsonObject flowSummary(String symbol, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/summary/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowSummary(String)}. */
+    public FlowSummaryResponse flowSummaryTyped(String symbol) { return flowSummaryTyped(symbol, null); }
+
+    /** Strongly-typed variant of {@link #flowSummary(String, String)}. */
+    public FlowSummaryResponse flowSummaryTyped(String symbol, String expiry) {
+        return gson.fromJson(flowSummary(symbol, expiry), FlowSummaryResponse.class);
+    }
+
+    /** Open-interest simulator state (official vs intraday). Requires the Alpha plan. */
+    public JsonObject flowOi(String symbol) { return flowOi(symbol, null); }
+
+    /** OI simulator state, sliced to one expiration cycle ({@code expiry}, nullable). Requires Alpha. */
+    public JsonObject flowOi(String symbol, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/oi/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowOi(String)}. */
+    public FlowOiResponse flowOiTyped(String symbol) { return flowOiTyped(symbol, null); }
+
+    /** Strongly-typed variant of {@link #flowOi(String, String)}. */
+    public FlowOiResponse flowOiTyped(String symbol, String expiry) {
+        return gson.fromJson(flowOi(symbol, expiry), FlowOiResponse.class);
+    }
+
+    /** Live (flow-adjusted) GEX + per-strike profile. Requires the Alpha plan. */
+    public JsonObject flowGex(String symbol) { return flowGex(symbol, null); }
+
+    /** Live GEX, sliced to one expiration cycle ({@code expiry}, nullable). Requires Alpha. */
+    public JsonObject flowGex(String symbol, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/gex/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowGex(String)}. */
+    public FlowGexResponse flowGexTyped(String symbol) { return flowGexTyped(symbol, null); }
+
+    /** Strongly-typed variant of {@link #flowGex(String, String)}. */
+    public FlowGexResponse flowGexTyped(String symbol, String expiry) {
+        return gson.fromJson(flowGex(symbol, expiry), FlowGexResponse.class);
+    }
+
+    /** Live (flow-adjusted) DEX + per-strike profile. Requires the Alpha plan. */
+    public JsonObject flowDex(String symbol) { return flowDex(symbol, null); }
+
+    /** Live DEX, sliced to one expiration cycle ({@code expiry}, nullable). Requires Alpha. */
+    public JsonObject flowDex(String symbol, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/dex/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowDex(String)}. */
+    public FlowDexResponse flowDexTyped(String symbol) { return flowDexTyped(symbol, null); }
+
+    /** Strongly-typed variant of {@link #flowDex(String, String)}. */
+    public FlowDexResponse flowDexTyped(String symbol, String expiry) {
+        return gson.fromJson(flowDex(symbol, expiry), FlowDexResponse.class);
+    }
+
+    /** Settled-vs-live dealer GEX/DEX + flow adjustment. Requires the Alpha plan. */
+    public JsonObject flowDealerRisk(String symbol) { return flowDealerRisk(symbol, null); }
+
+    /** Dealer risk, sliced to one expiration cycle ({@code expiry}, nullable). Requires Alpha. */
+    public JsonObject flowDealerRisk(String symbol, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/dealer-risk/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowDealerRisk(String)}. */
+    public FlowDealerRiskResponse flowDealerRiskTyped(String symbol) { return flowDealerRiskTyped(symbol, null); }
+
+    /** Strongly-typed variant of {@link #flowDealerRisk(String, String)}. */
+    public FlowDealerRiskResponse flowDealerRiskTyped(String symbol, String expiry) {
+        return gson.fromJson(flowDealerRisk(symbol, expiry), FlowDealerRiskResponse.class);
+    }
+
+    /** Everything-at-once live flow bundle (convenience). Requires the Alpha plan. */
+    public JsonObject flowLive(String symbol) { return flowLive(symbol, null); }
+
+    /** Live bundle, sliced to one expiration cycle ({@code expiry}, nullable). Requires Alpha. */
+    public JsonObject flowLive(String symbol, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/live/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowLive(String)}. */
+    public FlowLiveResponse flowLiveTyped(String symbol) { return flowLiveTyped(symbol, null); }
+
+    /** Strongly-typed variant of {@link #flowLive(String, String)}. */
+    public FlowLiveResponse flowLiveTyped(String symbol, String expiry) {
+        return gson.fromJson(flowLive(symbol, expiry), FlowLiveResponse.class);
+    }
+
+    /** Recent option trades, newest-first ({@code limit} 1-500, both nullable). Requires Alpha. */
+    public JsonObject flowOptionRecent(String symbol, Integer limit, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (limit != null) params.put("limit", String.valueOf(limit));
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/options/" + _seg(symbol) + "/recent", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowOptionRecent(String, Integer, String)}. */
+    public FlowOptionRecentResponse flowOptionRecentTyped(String symbol, Integer limit, String expiry) {
+        return gson.fromJson(flowOptionRecent(symbol, limit, expiry), FlowOptionRecentResponse.class);
+    }
+
+    /** Per-underlying option-flow aggregates ({@code expiry} nullable). Requires Alpha. */
+    public JsonObject flowOptionSummary(String symbol, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/options/" + _seg(symbol) + "/summary", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowOptionSummary(String, String)}. */
+    public FlowOptionSummaryResponse flowOptionSummaryTyped(String symbol, String expiry) {
+        return gson.fromJson(flowOptionSummary(symbol, expiry), FlowOptionSummaryResponse.class);
+    }
+
+    /** Large option prints ({@code minSize}/{@code expiry} nullable). Requires Alpha. */
+    public JsonObject flowOptionBlocks(String symbol, Integer minSize, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (minSize != null) params.put("minSize", String.valueOf(minSize));
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/options/" + _seg(symbol) + "/blocks", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowOptionBlocks(String, Integer, String)}. */
+    public FlowOptionBlocksResponse flowOptionBlocksTyped(String symbol, Integer minSize, String expiry) {
+        return gson.fromJson(flowOptionBlocks(symbol, minSize, expiry), FlowOptionBlocksResponse.class);
+    }
+
+    /** Per-minute option-flow buckets ({@code minutes}/{@code expiry} nullable). Requires Alpha. */
+    public JsonObject flowOptionHistory(String symbol, Integer minutes, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (minutes != null) params.put("minutes", String.valueOf(minutes));
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/options/" + _seg(symbol) + "/history", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowOptionHistory(String, Integer, String)}. */
+    public FlowOptionHistoryResponse flowOptionHistoryTyped(String symbol, Integer minutes, String expiry) {
+        return gson.fromJson(flowOptionHistory(symbol, minutes, expiry), FlowOptionHistoryResponse.class);
+    }
+
+    /** Cumulative option net-flow series ({@code minutes}/{@code expiry} nullable). Requires Alpha. */
+    public JsonObject flowOptionCumulative(String symbol, Integer minutes, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (minutes != null) params.put("minutes", String.valueOf(minutes));
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/options/" + _seg(symbol) + "/cumulative", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowOptionCumulative(String, Integer, String)}. */
+    public FlowOptionCumulativeResponse flowOptionCumulativeTyped(String symbol, Integer minutes, String expiry) {
+        return gson.fromJson(flowOptionCumulative(symbol, minutes, expiry), FlowOptionCumulativeResponse.class);
+    }
+
+    /** Recent stock trades, newest-first ({@code limit} 1-500, nullable). Requires Alpha. */
+    public JsonObject flowStockRecent(String symbol, Integer limit) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (limit != null) params.put("limit", String.valueOf(limit));
+        return get("/v1/flow/stocks/" + _seg(symbol) + "/recent", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowStockRecent(String, Integer)}. */
+    public FlowStockRecentResponse flowStockRecentTyped(String symbol, Integer limit) {
+        return gson.fromJson(flowStockRecent(symbol, limit), FlowStockRecentResponse.class);
+    }
+
+    /** Per-symbol stock-flow aggregates. Requires the Alpha plan. */
+    public JsonObject flowStockSummary(String symbol) {
+        return get("/v1/flow/stocks/" + _seg(symbol) + "/summary", null);
+    }
+
+    /** Strongly-typed variant of {@link #flowStockSummary(String)}. */
+    public FlowStockSummaryResponse flowStockSummaryTyped(String symbol) {
+        return gson.fromJson(flowStockSummary(symbol), FlowStockSummaryResponse.class);
+    }
+
+    /** Large stock prints ({@code minSize} nullable). Requires the Alpha plan. */
+    public JsonObject flowStockBlocks(String symbol, Integer minSize) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (minSize != null) params.put("minSize", String.valueOf(minSize));
+        return get("/v1/flow/stocks/" + _seg(symbol) + "/blocks", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowStockBlocks(String, Integer)}. */
+    public FlowStockBlocksResponse flowStockBlocksTyped(String symbol, Integer minSize) {
+        return gson.fromJson(flowStockBlocks(symbol, minSize), FlowStockBlocksResponse.class);
+    }
+
+    /** Per-minute stock-flow buckets w/ OHLC ({@code minutes} nullable). Requires Alpha. */
+    public JsonObject flowStockHistory(String symbol, Integer minutes) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (minutes != null) params.put("minutes", String.valueOf(minutes));
+        return get("/v1/flow/stocks/" + _seg(symbol) + "/history", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowStockHistory(String, Integer)}. */
+    public FlowStockHistoryResponse flowStockHistoryTyped(String symbol, Integer minutes) {
+        return gson.fromJson(flowStockHistory(symbol, minutes), FlowStockHistoryResponse.class);
+    }
+
+    /** Cumulative stock net-flow series ({@code minutes} nullable). Requires Alpha. */
+    public JsonObject flowStockCumulative(String symbol, Integer minutes) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (minutes != null) params.put("minutes", String.valueOf(minutes));
+        return get("/v1/flow/stocks/" + _seg(symbol) + "/cumulative", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowStockCumulative(String, Integer)}. */
+    public FlowStockCumulativeResponse flowStockCumulativeTyped(String symbol, Integer minutes) {
+        return gson.fromJson(flowStockCumulative(symbol, minutes), FlowStockCumulativeResponse.class);
+    }
+
+    /** Cross-symbol option-flow leaderboard ({@code n}/{@code windowMinutes} nullable). Requires Alpha. */
+    public JsonObject flowOptionsLeaderboard(Integer n, Integer windowMinutes) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (n != null) params.put("n", String.valueOf(n));
+        if (windowMinutes != null) params.put("windowMinutes", String.valueOf(windowMinutes));
+        return get("/v1/flow/options/leaderboard", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowOptionsLeaderboard(Integer, Integer)}. */
+    public FlowOptionLeaderboardResponse flowOptionsLeaderboardTyped(Integer n, Integer windowMinutes) {
+        return gson.fromJson(flowOptionsLeaderboard(n, windowMinutes), FlowOptionLeaderboardResponse.class);
+    }
+
+    /** Cross-symbol option-flow outliers ({@code limit}/{@code minTrades}/{@code windowMinutes} nullable). Requires Alpha. */
+    public JsonObject flowOptionsOutliers(Integer limit, Integer minTrades, Integer windowMinutes) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (limit != null) params.put("limit", String.valueOf(limit));
+        if (minTrades != null) params.put("minTrades", String.valueOf(minTrades));
+        if (windowMinutes != null) params.put("windowMinutes", String.valueOf(windowMinutes));
+        return get("/v1/flow/options/outliers", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowOptionsOutliers(Integer, Integer, Integer)}. */
+    public FlowOptionOutliersResponse flowOptionsOutliersTyped(Integer limit, Integer minTrades, Integer windowMinutes) {
+        return gson.fromJson(flowOptionsOutliers(limit, minTrades, windowMinutes), FlowOptionOutliersResponse.class);
+    }
+
+    /** Cross-symbol stock-flow leaderboard ({@code n}/{@code windowMinutes} nullable). Requires Alpha. */
+    public JsonObject flowStocksLeaderboard(Integer n, Integer windowMinutes) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (n != null) params.put("n", String.valueOf(n));
+        if (windowMinutes != null) params.put("windowMinutes", String.valueOf(windowMinutes));
+        return get("/v1/flow/stocks/leaderboard", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowStocksLeaderboard(Integer, Integer)}. */
+    public FlowStockLeaderboardResponse flowStocksLeaderboardTyped(Integer n, Integer windowMinutes) {
+        return gson.fromJson(flowStocksLeaderboard(n, windowMinutes), FlowStockLeaderboardResponse.class);
+    }
+
+    /** Cross-symbol stock-flow outliers ({@code limit}/{@code minTrades}/{@code windowMinutes} nullable). Requires Alpha. */
+    public JsonObject flowStocksOutliers(Integer limit, Integer minTrades, Integer windowMinutes) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (limit != null) params.put("limit", String.valueOf(limit));
+        if (minTrades != null) params.put("minTrades", String.valueOf(minTrades));
+        if (windowMinutes != null) params.put("windowMinutes", String.valueOf(windowMinutes));
+        return get("/v1/flow/stocks/outliers", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowStocksOutliers(Integer, Integer, Integer)}. */
+    public FlowStockOutliersResponse flowStocksOutliersTyped(Integer limit, Integer minTrades, Integer windowMinutes) {
+        return gson.fromJson(flowStocksOutliers(limit, minTrades, windowMinutes), FlowStockOutliersResponse.class);
     }
 
     // ── Pricing & Sizing ──────────────────────────────────────────────

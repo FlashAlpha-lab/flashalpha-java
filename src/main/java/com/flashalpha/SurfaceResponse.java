@@ -1,6 +1,5 @@
 package com.flashalpha;
 
-import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
@@ -12,10 +11,8 @@ import java.util.List;
  * moneyness (columns). The {@link #iv} matrix is the IV (annualised %)
  * at each {@code (tenor, moneyness)} pair.
  *
- * <p>{@link #slicesUsed} reports the per-expiry slices that fed the fit
- * — useful for sanity-checking sparsity warnings. Its element shape is
- * preserved as raw JSON ({@link JsonElement}) so callers can adapt as
- * the API evolves.
+ * <p>{@link #slicesUsed} reports how many per-expiry slices fed the fit
+ * — useful for sanity-checking sparsity warnings.
  */
 public final class SurfaceResponse {
 
@@ -49,10 +46,7 @@ public final class SurfaceResponse {
     @SerializedName("iv")
     public double[][] iv;
 
-    /**
-     * Per-expiry slice metadata used to fit the surface. Kept as raw
-     * JSON so consumers tolerate forward-compatible shape changes.
-     */
+    /** Count of expiry slices that contributed to the surface fit. */
     @SerializedName("slices_used")
-    public List<JsonElement> slicesUsed;
+    public Integer slicesUsed;
 }
