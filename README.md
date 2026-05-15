@@ -7,6 +7,8 @@ exposure (VEX), charm exposure (CHEX), 0DTE analytics, volatility surface, impli
 volatility, Black-Scholes greeks, Kelly criterion position sizing, stock quotes, and option
 chain data — all from a single, dependency-light Java 11+ package.
 
+> 🔑 **[Get a free API key at flashalpha.com →](https://flashalpha.com)** · 📚 [API documentation](https://flashalpha.com/docs) · 💹 [FlashAlpha options analytics API](https://flashalpha.com)
+
 ## Requirements
 
 - Java 11 or later
