@@ -49,14 +49,24 @@ playground lives at https://lab.flashalpha.com/swagger.
   order greeks + lambda + veta.
 - `POST /v1/screener` — live options screener (filter/rank symbols by
   GEX, VRP, IV, greeks, harvest scores, custom formulas).
+- **Flow — live, simulation-aware (Alpha+):** 22 `/v1/flow/*` endpoints.
+  Analytics: `flowLevels` / `flowPinRisk` / `flowSummary` / `flowOi` /
+  `flowGex` / `flowDex` / `flowDealerRisk` / `flowLive` — live gamma flip /
+  walls / max pain, 0DTE pin score, flow direction + GEX shift, OI
+  simulator state, flow-adjusted GEX/DEX, settled-vs-live dealer risk,
+  all-in-one bundle. Raw: `flowOptionRecent|Summary|Blocks|History|
+  Cumulative`, the `flowStock*` equivalents, and `flowOptionsLeaderboard|
+  Outliers` / `flowStocksLeaderboard|Outliers`. Every method has a
+  strongly-typed `*Typed` variant.
 
 ## Tiers (summary)
 
 - **Free / Public** — health, surface, tickers, basic stock quotes.
 - **Any** — GEX/DEX/VEX/CHEX, key levels, greeks, IV, stock summary.
 - **Growth+** — exposure summary, 0DTE, narrative, max pain, option
-  quotes, volatility, exposure history.
-- **Alpha+** — VRP, advanced volatility (SVI, variance swap, arb checks).
+  quotes, volatility.
+- **Alpha+** — VRP, advanced volatility (SVI, variance swap, arb checks),
+  the full `flow*` tier (22 simulation-aware + raw flow endpoints).
 
 Sign up for an API key at https://flashalpha.com.
 
