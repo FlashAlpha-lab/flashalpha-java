@@ -980,6 +980,60 @@ public class FlashAlphaClient {
         return gson.fromJson(flowStocksOutliers(limit, minTrades, windowMinutes), FlowStockOutliersResponse.class);
     }
 
+    /**
+     * Scored unusual-flow feed for one underlying. Requires the Alpha plan.
+     * Each notable print is coalesced into a signal, classified
+     * (block/sweep, NBBO aggressor, opening/closing bias, intent), and
+     * scored 0–100 with a transparent component breakdown. Ranked highest
+     * score first. All filter parameters are nullable.
+     *
+     * @param minScore      Drop signals below this 0–100 threshold.
+     * @param intent        Filter to {@code "bullish"} / {@code "bearish"} /
+     *                      {@code "neutral"}.
+     * @param structure     Filter to {@code "block"} / {@code "sweep"}.
+     * @param windowMinutes Look-back window in minutes (1–10080, default 240).
+     * @param limit         Max signals returned (1–500, default 50).
+     * @param expiry        Slice the chain to one expiration cycle
+     *                      ({@code YYYY-MM-DD}).
+     */
+    public JsonObject flowSignals(String symbol, Integer minScore, String intent,
+                                  String structure, Integer windowMinutes, Integer limit,
+                                  String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (minScore != null) params.put("minScore", String.valueOf(minScore));
+        if (intent != null) params.put("intent", intent);
+        if (structure != null) params.put("structure", structure);
+        if (windowMinutes != null) params.put("windowMinutes", String.valueOf(windowMinutes));
+        if (limit != null) params.put("limit", String.valueOf(limit));
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/signals/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowSignals(String, Integer, String, String, Integer, Integer, String)}. */
+    public FlowSignalsResponse flowSignalsTyped(String symbol, Integer minScore, String intent,
+                                                String structure, Integer windowMinutes, Integer limit,
+                                                String expiry) {
+        return gson.fromJson(flowSignals(symbol, minScore, intent, structure, windowMinutes, limit, expiry),
+                FlowSignalsResponse.class);
+    }
+
+    /**
+     * Net bullish/bearish + opening/closing premium roll-up plus the top
+     * 10 signals. Cheap "smart-money tilt" read. Requires the Alpha plan.
+     * Both filter parameters are nullable.
+     */
+    public JsonObject flowSignalsSummary(String symbol, Integer windowMinutes, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (windowMinutes != null) params.put("windowMinutes", String.valueOf(windowMinutes));
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/signals/" + _seg(symbol) + "/summary", params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #flowSignalsSummary(String, Integer, String)}. */
+    public FlowSignalsSummaryResponse flowSignalsSummaryTyped(String symbol, Integer windowMinutes, String expiry) {
+        return gson.fromJson(flowSignalsSummary(symbol, windowMinutes, expiry), FlowSignalsSummaryResponse.class);
+    }
+
     // ── Pricing & Sizing ──────────────────────────────────────────────
 
     /**

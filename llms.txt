@@ -49,15 +49,19 @@ playground lives at https://lab.flashalpha.com/swagger.
   order greeks + lambda + veta.
 - `POST /v1/screener` — live options screener (filter/rank symbols by
   GEX, VRP, IV, greeks, harvest scores, custom formulas).
-- **Flow — live, simulation-aware (Alpha+):** 22 `/v1/flow/*` endpoints.
+- **Flow — live, simulation-aware (Alpha+):** 24 `/v1/flow/*` endpoints.
   Analytics: `flowLevels` / `flowPinRisk` / `flowSummary` / `flowOi` /
   `flowGex` / `flowDex` / `flowDealerRisk` / `flowLive` — live gamma flip /
   walls / max pain, 0DTE pin score, flow direction + GEX shift, OI
   simulator state, flow-adjusted GEX/DEX, settled-vs-live dealer risk,
-  all-in-one bundle. Raw: `flowOptionRecent|Summary|Blocks|History|
-  Cumulative`, the `flowStock*` equivalents, and `flowOptionsLeaderboard|
-  Outliers` / `flowStocksLeaderboard|Outliers`. Every method has a
-  strongly-typed `*Typed` variant.
+  all-in-one bundle. Signals: `flowSignals` / `flowSignalsSummary` —
+  scored per-print signals (block/sweep, NBBO aggressor, opening/closing
+  bias, intent) with 0-100 score + chain enrichment, plus net
+  bullish/bearish + opening/closing premium roll-up. Raw:
+  `flowOptionRecent|Summary|Blocks|History|Cumulative`, the `flowStock*`
+  equivalents, and `flowOptionsLeaderboard|Outliers` /
+  `flowStocksLeaderboard|Outliers`. Every method has a strongly-typed
+  `*Typed` variant.
 
 ## Tiers (summary)
 
@@ -66,7 +70,7 @@ playground lives at https://lab.flashalpha.com/swagger.
 - **Growth+** — exposure summary, 0DTE, narrative, max pain, option
   quotes, volatility.
 - **Alpha+** — VRP, advanced volatility (SVI, variance swap, arb checks),
-  the full `flow*` tier (22 simulation-aware + raw flow endpoints).
+  the full `flow*` tier (24 simulation-aware + signals + raw flow endpoints).
 
 Sign up for an API key at https://flashalpha.com.
 

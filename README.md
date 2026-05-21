@@ -175,6 +175,8 @@ Each method has a strongly-typed `*Typed` variant (e.g. `flowLevelsTyped`).
 | `flowDex(symbol[, expiry])` | Live (flow-adjusted) DEX + per-strike profile |
 | `flowDealerRisk(symbol[, expiry])` | Settled-vs-live dealer GEX/DEX + flow adjustment |
 | `flowLive(symbol[, expiry])` | Everything-at-once live flow bundle |
+| `flowSignals(symbol, minScore, intent, structure, windowMinutes, limit, expiry)` | Scored, classified unusual-flow feed (block/sweep, intent, 0-100 score) |
+| `flowSignalsSummary(symbol, windowMinutes, expiry)` | Net bullish/bearish + opening/closing premium roll-up + top 10 signals |
 | `flowOptionRecent(symbol, limit, expiry)` | Recent option trades, newest-first |
 | `flowOptionSummary(symbol, expiry)` | Per-underlying option-flow aggregates |
 | `flowOptionBlocks(symbol, minSize, expiry)` | Large option prints (`size >= minSize`) |

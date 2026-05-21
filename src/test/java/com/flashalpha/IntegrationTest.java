@@ -1977,4 +1977,49 @@ public class IntegrationTest {
                 "biggestAgeSec", "lastVwap", "lastTradeUtc", "lastTradeAgeSec"},
                 "flow/stocks/outliers.outliers[0]");
     }
+
+    private static final String[] SIGNAL_FIELDS = {"ts", "expiry", "strike",
+            "right", "side", "price", "size", "premium", "dte", "structure",
+            "aggressor", "open_close_bias", "open_close_confidence",
+            "contract_net_oi_delta", "intent", "score", "conviction", "tags",
+            "score_breakdown", "enrichment"};
+
+    @Test
+    public void testFlowSignals() {
+        JsonObject r = client.flowSignals(FLOW_SYM, null, null, null, 240, 10, null);
+        reqKeys(r, new String[]{"symbol", "as_of", "window_minutes", "expiry",
+                "underlying_price", "chain", "count", "signals"}, "flow/signals");
+        assertEquals(FLOW_SYM, r.get("symbol").getAsString());
+        reqKeys(r.getAsJsonObject("chain"), new String[]{"call_wall", "put_wall",
+                "max_pain", "gamma_flip"}, "flow/signals.chain");
+        JsonObject s = firstObj(r, "signals");
+        if (s != null) {
+            reqKeys(s, SIGNAL_FIELDS, "flow/signals.signals[0]");
+            reqKeys(s.getAsJsonObject("score_breakdown"),
+                    new String[]{"premium", "size_vs_oi", "aggressor", "sweep",
+                            "opening_bias", "tenor"},
+                    "flow/signals.signals[0].score_breakdown");
+            reqKeys(s.getAsJsonObject("enrichment"),
+                    new String[]{"iv", "delta", "gamma", "iv_vs_atm", "moneyness",
+                            "estimated_delta_notional",
+                            "hypothetical_gex_impact_if_opening"},
+                    "flow/signals.signals[0].enrichment");
+        }
+        FlowSignalsResponse t = client.flowSignalsTyped(FLOW_SYM, null, null, null, 240, 10, null);
+        assertEquals(FLOW_SYM, t.symbol);
+    }
+
+    @Test
+    public void testFlowSignalsSummary() {
+        JsonObject r = client.flowSignalsSummary(FLOW_SYM, 240, null);
+        reqKeys(r, new String[]{"symbol", "as_of", "window_minutes", "expiry",
+                "underlying_price", "signal_count", "bullish_premium",
+                "bearish_premium", "net_directional_premium", "opening_premium",
+                "closing_premium", "top_signals"}, "flow/signals/summary");
+        assertEquals(FLOW_SYM, r.get("symbol").getAsString());
+        JsonObject s = firstObj(r, "top_signals");
+        if (s != null) reqKeys(s, SIGNAL_FIELDS, "flow/signals/summary.top_signals[0]");
+        FlowSignalsSummaryResponse t = client.flowSignalsSummaryTyped(FLOW_SYM, 240, null);
+        assertEquals(FLOW_SYM, t.symbol);
+    }
 }
