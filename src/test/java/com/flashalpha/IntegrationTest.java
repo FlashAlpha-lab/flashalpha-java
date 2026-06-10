@@ -2022,4 +2022,106 @@ public class IntegrationTest {
         FlowSignalsSummaryResponse t = client.flowSignalsSummaryTyped(FLOW_SYM, 240, null);
         assertEquals(FLOW_SYM, t.symbol);
     }
+
+    // ── Realized & Forecast Volatility (Alpha+) ───────────────────────
+    //
+    // Live coverage for the two volatility endpoints whose typed POCOs were
+    // recently added. Each asserts the untyped wire shape AND that the typed
+    // deserialization populates the nested leaves (a renamed @SerializedName
+    // surfaces as a null assertion failure). The forecast test also pins the
+    // documented invariant that garch.params.dof is null for dist=gaussian
+    // and non-null for dist=student_t.
+
+    @Test
+    public void testRealizedVolatilityTyped() {
+        // AAPL — clean single-name with a continuous price history.
+        JsonObject r = client.realizedVolatility("AAPL");
+        reqKeys(r, new String[]{"symbol", "as_of", "estimators"}, "volatility/realized");
+        assertEquals("AAPL", r.get("symbol").getAsString());
+        reqKeys(r.getAsJsonObject("estimators"),
+                new String[]{"close_to_close", "parkinson", "garman_klass",
+                        "rogers_satchell", "yang_zhang"}, "volatility/realized.estimators");
+
+        RealizedVolatilityResponse t = client.realizedVolatilityTyped("AAPL");
+        assertEquals("AAPL", t.symbol);
+        assertNotNull("as_of", t.asOf);
+        assertNotNull("estimators", t.estimators);
+        // every estimator family + its 10/20/30d windows must deserialize
+        RealizedVolatilityResponse.Estimator[] est = {
+                t.estimators.closeToClose, t.estimators.parkinson, t.estimators.garmanKlass,
+                t.estimators.rogersSatchell, t.estimators.yangZhang,
+        };
+        String[] names = {"close_to_close", "parkinson", "garman_klass",
+                "rogers_satchell", "yang_zhang"};
+        for (int i = 0; i < est.length; i++) {
+            assertNotNull("estimators." + names[i], est[i]);
+            assertNotNull("estimators." + names[i] + ".rv10", est[i].rv10);
+            assertNotNull("estimators." + names[i] + ".rv20", est[i].rv20);
+            assertNotNull("estimators." + names[i] + ".rv30", est[i].rv30);
+        }
+    }
+
+    @Test
+    public void testVolatilityForecastTyped() {
+        // Default distribution (student_t) — full field walk through the POCO.
+        JsonObject r = client.volatilityForecast("AAPL");
+        reqKeys(r, new String[]{"symbol", "as_of", "ewma", "har_rv", "garch"},
+                "volatility/forecast");
+        assertEquals("AAPL", r.get("symbol").getAsString());
+
+        VolatilityForecastResponse t = client.volatilityForecastTyped("AAPL");
+        assertEquals("AAPL", t.symbol);
+        assertNotNull("as_of", t.asOf);
+
+        // ewma
+        assertNotNull("ewma", t.ewma);
+        assertNotNull("ewma.lambda", t.ewma.lambda);
+        assertNotNull("ewma.vol_annualized", t.ewma.volAnnualized);
+        assertNotNull("ewma.next_day_forecast", t.ewma.nextDayForecast);
+
+        // har_rv + components
+        assertNotNull("har_rv", t.harRv);
+        assertNotNull("har_rv.vol_annualized", t.harRv.volAnnualized);
+        assertNotNull("har_rv.next_day_forecast", t.harRv.nextDayForecast);
+        assertNotNull("har_rv.components", t.harRv.components);
+        assertNotNull("har_rv.components.daily", t.harRv.components.daily);
+        assertNotNull("har_rv.components.weekly", t.harRv.components.weekly);
+        assertNotNull("har_rv.components.monthly", t.harRv.components.monthly);
+
+        // garch
+        assertNotNull("garch", t.garch);
+        assertNotNull("garch.model", t.garch.model);
+        assertNotNull("garch.distribution", t.garch.distribution);
+        assertNotNull("garch.params", t.garch.params);
+        assertNotNull("garch.params.omega", t.garch.params.omega);
+        assertNotNull("garch.params.alpha", t.garch.params.alpha);
+        assertNotNull("garch.params.beta", t.garch.params.beta);
+        assertNotNull("garch.persistence", t.garch.persistence);
+        assertNotNull("garch.half_life_days", t.garch.halfLifeDays);
+        assertNotNull("garch.converged", t.garch.converged);
+        // forecast path is null when the MLE optimiser did not converge
+        if (Boolean.TRUE.equals(t.garch.converged)) {
+            assertNotNull("garch.forecast", t.garch.forecast);
+            if (!t.garch.forecast.isEmpty()) {
+                VolatilityForecastResponse.Garch.ForecastPoint p = t.garch.forecast.get(0);
+                assertNotNull("garch.forecast[0].horizon_days", p.horizonDays);
+                assertNotNull("garch.forecast[0].vol_annualized", p.volAnnualized);
+            }
+        }
+    }
+
+    @Test
+    public void testVolatilityForecastGarchDofByDistribution() {
+        // Documented invariant: garch.params.dof (Student-t degrees of freedom)
+        // is populated only for the student_t innovation distribution.
+        VolatilityForecastResponse student = client.volatilityForecastTyped("AAPL", "student_t");
+        assertEquals("student_t", student.garch.distribution);
+        assertNotNull("garch.params.dof must be non-null for student_t",
+                student.garch.params.dof);
+
+        VolatilityForecastResponse gaussian = client.volatilityForecastTyped("AAPL", "gaussian");
+        assertEquals("gaussian", gaussian.garch.distribution);
+        assertNull("garch.params.dof must be null for gaussian",
+                gaussian.garch.params.dof);
+    }
 }
