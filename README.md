@@ -22,20 +22,20 @@ chain data — all from a single, dependency-light Java 11+ package.
 <dependency>
     <groupId>com.flashalpha</groupId>
     <artifactId>flashalpha</artifactId>
-    <version>0.3.7</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
 ### Gradle (Groovy DSL)
 
 ```groovy
-implementation 'com.flashalpha:flashalpha:0.3.7'
+implementation 'com.flashalpha:flashalpha:1.1.0'
 ```
 
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("com.flashalpha:flashalpha:0.3.7")
+implementation("com.flashalpha:flashalpha:1.1.0")
 ```
 
 ## Quick start
@@ -132,6 +132,7 @@ All methods return `com.google.gson.JsonObject`.
 | `optionQuote(ticker)` | Option quotes with greeks for all contracts | Growth+ |
 | `optionQuote(ticker, expiry, strike, type)` | Filtered option quotes | Growth+ |
 | `surface(symbol)` | Volatility surface grid | Public |
+| `surfaceSvi(symbol)` | SVI-fitted vol surface — calibrated `(a, b, rho, m, sigma)` params, per-expiry forward, ATM total variance and ATM IV | Alpha+ |
 | `stockSummary(symbol)` | Comprehensive stock summary | Any |
 
 ### Historical data
@@ -158,8 +159,13 @@ All methods return `com.google.gson.JsonObject`.
 | `narrative(symbol)` | Verbal narrative analysis of exposure | Growth+ |
 | `zeroDte(symbol)` | Real-time 0DTE analytics | Growth+ |
 | `zeroDte(symbol, strikeRange)` | 0DTE analytics with custom strike range | Growth+ |
+| `zeroDte(symbol, strikeRange, expiry)` | 0DTE analytics for a specific expiry | Growth+ |
 | `maxPain(symbol)` | Max pain analysis with dealer alignment, pain curve, pin probability | Growth+ |
 | `maxPain(symbol, expiration)` | Max pain for a single expiry | Growth+ |
+| `exposureSheet(symbol[, expiration, minOi])` | Unified per-strike sheet — GEX/DEX/VEX/CHEX + DAG, chain totals, Line-in-the-Sand inflection strike, gamma peaks, OPEX / triple-witching flags | Growth+ |
+| `exposureTermStructure(symbol)` | Net GEX/DEX/VEX/CHEX aggregated by DTE bucket and rolled up per expiry | Growth+ |
+| `exposureBasket(symbols[, weights])` | Weighted cross-symbol exposure basket — aggregate net GEX/DEX/VEX/CHEX across up to 50 symbols | Growth+ |
+| `oiDiff(symbol[, topN])` | Day-over-day open-interest deltas, top-N changes by magnitude, call/put aggregate totals | Growth+ |
 
 ### Flow (live, simulation-aware) — requires the Alpha plan
 
@@ -187,6 +193,8 @@ Each method has a strongly-typed `*Typed` variant (e.g. `flowLevelsTyped`).
 | `flowStockBlocks(symbol, minSize)` | Large stock prints (`size >= minSize`) |
 | `flowStockHistory(symbol, minutes)` | Per-minute stock-flow buckets w/ OHLC |
 | `flowStockCumulative(symbol, minutes)` | Cumulative stock net-flow series |
+| `flowStockBars(symbol, resolution[, minutes])` | Per-resolution stock-flow OHLC bars (`1s/1m/5m/15m/30m/1h/4h`) |
+| `flowDealerPremium(symbol[, windowMinutes, expiry])` | Full-tape Net Dealer Premium roll-up over a window |
 | `flowOptionsLeaderboard(n, windowMinutes)` | Cross-symbol option-flow leaderboard |
 | `flowOptionsOutliers(limit, minTrades, windowMinutes)` | Cross-symbol option-flow outliers |
 | `flowStocksLeaderboard(n, windowMinutes)` | Cross-symbol stock-flow leaderboard |
@@ -206,6 +214,85 @@ Each method has a strongly-typed `*Typed` variant (e.g. `flowLevelsTyped`).
 |--------|-------------|------|
 | `volatility(symbol)` | Term structure, skew, realized vs implied | Growth+ |
 | `advVolatility(symbol)` | SVI, variance surface, arbitrage detection | Alpha+ |
+| `liquidity(symbol)` | Per-expiry execution / liquidity score (0-100) — ATM bid-ask spread %, OI-weighted spread %, ATM OI depth, best/worst expiry | Growth+ |
+| `skewTerm(symbol)` | Skew term structure — ATM IV, 25Δ / 10Δ wing IVs, `skew_25d`, `risk_reversal_25d`, `butterfly_25d`, `tail_convexity` | Growth+ |
+| `spotVolCorrelation(symbol)` | Rolling spot-vol correlation (empirical leverage / spot-vol-beta) | Growth+ |
+| `dispersion(index, symbols[, weights, horizonDays])` | Implied-vs-realized dispersion / vol-arb between index and constituent basket, per-constituent contribution | Alpha+ |
+| `expectedMove(symbol[, expiry])` | Straddle-implied expected move per expiry from ATM IV | Basic+ |
+| `realizedVolatility(symbol)` | Range-based realized vol over 10 / 20 / 30-day windows — close-to-close, Parkinson, Garman-Klass, Rogers-Satchell, Yang-Zhang | Alpha+ |
+| `volatilityForecast(symbol[, dist])` | Conditional vol forecasts — EWMA (λ=0.94), HAR-RV, GARCH(1,1) MLE with persistence, half-life, and multi-horizon forecast path | Alpha+ |
+
+### Variance risk premium (VRP)
+
+| Method | Description | Plan |
+|--------|-------------|------|
+| `vrp(symbol)` | Variance risk premium — IV-vs-RV spread, directional skew, GEX-conditioned harvest scores, short-vol strategy scores, term VRP curve | Alpha+ |
+| `vrp(symbol, date)` | Point-in-time VRP for a specific historical date | Alpha+ |
+| `vrpHistory(symbol[, days])` | Trailing series of daily VRP snapshots | Alpha+ |
+
+### Strategy signals
+
+Ten decision-grade strategy signals sharing the `StrategyDecisionResponse` envelope (recommendation, conviction, rationale, suggested structure). Each has a `*Typed` variant.
+
+| Method | Description | Plan |
+|--------|-------------|------|
+| `strategyFlowAnomaly(symbol[, expiry])` | Directional flow-anomaly signal | Growth+ |
+| `strategyExpiryPositioning(symbol[, expiry, minOpenInterest, wingWidth])` | OPEX pin / expiry-positioning signal | Basic+ |
+| `strategyZeroDte(symbol[, expiry, minOpenInterest, wingWidth])` | 0DTE range-compression signal | Growth+ |
+| `strategyDealerRegime(symbol[, expiry])` | Dealer gamma-regime signal | Growth+ |
+| `strategyVolCarry(symbol[, expiry, minOpenInterest, targetShortDelta, maxWidth, minCredit])` | Vol-carry / VRP harvest signal | Alpha+ |
+| `strategyYieldEnhancement(symbol[, expiry, targetDelta, minOpenInterest, structure, excludeEarningsBeforeExpiry])` | Covered-call / cash-secured-put yield signal | Growth+ |
+| `strategySurfaceAnomaly(symbol[, expiry])` | SVI surface-anomaly signal | Alpha+ |
+| `strategySkew(symbol[, expiry])` | 25-delta skew signal | Growth+ |
+| `strategyTermStructure(symbol)` | ATM term-structure signal | Growth+ |
+| `strategyTailPricing(symbol[, expiry])` | Downside-tail-pricing signal | Growth+ |
+
+### Earnings
+
+| Method | Description | Plan |
+|--------|-------------|------|
+| `earningsCalendar([days, symbols, importance])` | Upcoming earnings calendar over a forward window | Growth+ |
+| `earningsExpectedMove(symbol)` | Straddle-implied earnings expected move | Growth+ |
+| `earningsHistory(symbol[, limit])` | Historical post-earnings move history | Growth+ |
+| `earningsIvCrush(symbol)` | Earnings IV-crush profile | Growth+ |
+| `earningsVrp(symbol)` | Earnings variance-risk-premium read | Alpha+ |
+| `earningsDealerPositioning(symbol)` | Earnings dealer-positioning read | Alpha+ |
+| `earningsStrategies(symbol)` | Suggested earnings option structures | Alpha+ |
+| `earningsScreener([sort, limit, days, minImportance])` | Rank upcoming earnings (e.g. `vrp_richest`) | Growth+ |
+
+### Structures (multi-leg, pure math)
+
+POST endpoints — no symbol resolution; supply legs via `StructureRequest` / `StructureGreeksRequest` (`StructureLeg.pnlLeg(...)` / `StructureLeg.greeksLeg(...)`).
+
+| Method | Description | Plan |
+|--------|-------------|------|
+| `structurePnl(request)` | At-expiry P&L curve, breakevens, max profit/loss for an arbitrary multi-leg structure | Basic+ |
+| `structureGreeks(request)` | Aggregate Black-Scholes greeks across a multi-leg position (per-leg expiry + IV) | Basic+ |
+
+### Zero-DTE flow
+
+| Method | Description | Plan |
+|--------|-------------|------|
+| `flowZeroDteSnapshot(symbol)` | Intraday 0DTE flow snapshot + net `flow_direction` | Growth+ |
+| `flowZeroDteSeries(symbol[, bar, minutes])` | Intraday 0DTE bucketed-flow time series | Growth+ |
+| `flowZeroDteHedgeFlow(symbol[, side, bar, minutes])` | Intraday 0DTE dealer hedge-flow series | Growth+ |
+| `flowZeroDteHeatmap(symbol[, metric, mode, bar, minutes])` | Intraday 0DTE strike × time heatmap | Alpha+ |
+| `flowZeroDteStrikeFlow(symbol[, bar, minutes])` | Intraday 0DTE per-strike flow | Growth+ |
+
+### Macro and universe
+
+| Method | Description | Plan |
+|--------|-------------|------|
+| `vixState()` | Composite VIX-state read (level, regime, term structure) | Growth+ |
+| `universe([sort, limit])` | Curated tier-1 / tier-2 symbol directory (pre-warmed universe) | Public |
+
+### Screener
+
+| Method | Description | Plan |
+|--------|-------------|------|
+| `screener(body)` | Live options screener — filter / rank symbols by GEX, VRP, IV, greeks, harvest scores, and custom formulas | Growth+ |
+
+v1.1 adds screenable fields covering the new analytics: `expected_move`, `liquidity_score`, `skew_25d`, `risk_reversal_25d`, `butterfly_25d`, `tail_convexity`, `spot_vol_corr`, `oi_diff_call`, `oi_diff_put`, `vix_state`, plus the per-strike `exposure_sheet` columns — combinable with existing `regime`, `harvest_score`, `dealer_flow_risk`, `vrp_regime`, `atm_iv`, `net_gex`, and `term_state` fields.
 
 ### Reference data
 

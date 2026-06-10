@@ -1541,4 +1541,872 @@ public class FlashAlphaClient {
         JsonObject raw = health();
         return gson.fromJson(raw, HealthResponse.class);
     }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  v1.1 — new endpoint families
+    //  (surface/svi, exposure sheet/term-structure/basket/oi-diff,
+    //   liquidity, skew-term, spot-vol-correlation, dispersion, vix-state,
+    //   universe, expected-move, vrp history, dealer-premium, zero-dte flow,
+    //   flow stock bars, strategy signals ×10, earnings ×8, structures ×2,
+    //   screener fields). All preserve back-compatibility: existing
+    //   signatures are untouched; new params arrive as additional overloads.
+    // ══════════════════════════════════════════════════════════════════
+
+    // ── Market Data (additional) ──────────────────────────────────────
+
+    /**
+     * Live SVI-fitted volatility surface — calibrated {@code (a, b, rho, m, sigma)}
+     * parameters per expiry slice with per-expiry forward, ATM total variance, and
+     * ATM IV. Requires Alpha+ plan.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject surfaceSvi(String symbol) {
+        return get("/v1/surface/svi/" + _seg(symbol));
+    }
+
+    /** Strongly-typed variant of {@link #surfaceSvi(String)} → {@link SurfaceSviResponse}. */
+    public SurfaceSviResponse surfaceSviTyped(String symbol) {
+        return gson.fromJson(surfaceSvi(symbol), SurfaceSviResponse.class);
+    }
+
+    // ── Exposure Analytics (additional) ───────────────────────────────
+
+    /**
+     * Unified per-strike exposure sheet joining GEX/DEX/VEX/CHEX and DAG, with
+     * chain totals, the Line-in-the-Sand inflection strike, gamma peaks, and
+     * OPEX / triple-witching flags. Requires Growth+ plan.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject exposureSheet(String symbol) {
+        return exposureSheet(symbol, null, null);
+    }
+
+    /**
+     * Exposure sheet with optional expiration + minimum-OI filters.
+     *
+     * @param symbol     Underlying symbol.
+     * @param expiration Expiration date filter (nullable).
+     * @param minOi      Minimum open interest filter (nullable).
+     */
+    public JsonObject exposureSheet(String symbol, String expiration, Integer minOi) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiration != null) params.put("expiration", expiration);
+        if (minOi != null) params.put("min_oi", String.valueOf(minOi));
+        return get("/v1/exposure/sheet/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #exposureSheet(String)} → {@link ExposureSheetResponse}. */
+    public ExposureSheetResponse exposureSheetTyped(String symbol) {
+        return exposureSheetTyped(symbol, null, null);
+    }
+
+    /** Strongly-typed variant of {@link #exposureSheet(String, String, Integer)}. */
+    public ExposureSheetResponse exposureSheetTyped(String symbol, String expiration, Integer minOi) {
+        return gson.fromJson(exposureSheet(symbol, expiration, minOi), ExposureSheetResponse.class);
+    }
+
+    /**
+     * Exposure term structure — net GEX/DEX/VEX/CHEX aggregated by DTE bucket and
+     * rolled up per expiry. Requires Growth+ plan.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject exposureTermStructure(String symbol) {
+        return get("/v1/exposure/term-structure/" + _seg(symbol));
+    }
+
+    /** Strongly-typed variant of {@link #exposureTermStructure(String)} → {@link ExposureTermStructureResponse}. */
+    public ExposureTermStructureResponse exposureTermStructureTyped(String symbol) {
+        return gson.fromJson(exposureTermStructure(symbol), ExposureTermStructureResponse.class);
+    }
+
+    /**
+     * Weighted cross-symbol exposure basket — aggregate net GEX/DEX/VEX/CHEX
+     * across up to 50 symbols. Requires Growth+ plan.
+     *
+     * @param symbols Comma-separated symbol list (required), e.g. {@code "AAPL,MSFT,NVDA"}.
+     * @param weights Comma-separated weights (nullable; equal-weighted when omitted).
+     */
+    public JsonObject exposureBasket(String symbols, String weights) {
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("symbols", symbols);
+        if (weights != null) params.put("weights", weights);
+        return get("/v1/exposure/basket", params);
+    }
+
+    /** Convenience overload — equal-weighted basket. */
+    public JsonObject exposureBasket(String symbols) {
+        return exposureBasket(symbols, null);
+    }
+
+    /** Strongly-typed variant of {@link #exposureBasket(String, String)} → {@link ExposureBasketResponse}. */
+    public ExposureBasketResponse exposureBasketTyped(String symbols, String weights) {
+        return gson.fromJson(exposureBasket(symbols, weights), ExposureBasketResponse.class);
+    }
+
+    /** Strongly-typed, equal-weighted variant of {@link #exposureBasket(String)}. */
+    public ExposureBasketResponse exposureBasketTyped(String symbols) {
+        return exposureBasketTyped(symbols, null);
+    }
+
+    /**
+     * Day-over-day open-interest deltas (today minus prior trading day), top-N
+     * changes by absolute magnitude, and call/put aggregate totals. Requires
+     * Growth+ plan.
+     *
+     * @param symbol Underlying symbol.
+     * @param topN   Number of top changes to return (nullable).
+     */
+    public JsonObject oiDiff(String symbol, Integer topN) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (topN != null) params.put("topN", String.valueOf(topN));
+        return get("/v1/exposure/oi-diff/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Convenience overload — default top-N. */
+    public JsonObject oiDiff(String symbol) {
+        return oiDiff(symbol, null);
+    }
+
+    /** Strongly-typed variant of {@link #oiDiff(String, Integer)} → {@link OiDiffResponse}. */
+    public OiDiffResponse oiDiffTyped(String symbol, Integer topN) {
+        return gson.fromJson(oiDiff(symbol, topN), OiDiffResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #oiDiff(String)}. */
+    public OiDiffResponse oiDiffTyped(String symbol) {
+        return oiDiffTyped(symbol, null);
+    }
+
+    /**
+     * Real-time 0DTE analytics with configurable strike range AND a specific
+     * expiry. Back-compatible extension of {@link #zeroDte(String, Double)}.
+     * Requires Growth+ plan.
+     *
+     * @param symbol      Underlying symbol.
+     * @param strikeRange Percentage range around spot to include (nullable).
+     * @param expiry      Expiration date to target ({@code yyyy-MM-dd}, nullable).
+     */
+    public JsonObject zeroDte(String symbol, Double strikeRange, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (strikeRange != null) params.put("strike_range", String.valueOf(strikeRange));
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/exposure/zero-dte/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #zeroDte(String, Double, String)} → {@link ZeroDteResponse}. */
+    public ZeroDteResponse zeroDteTyped(String symbol, Double strikeRange, String expiry) {
+        return gson.fromJson(zeroDte(symbol, strikeRange, expiry), ZeroDteResponse.class);
+    }
+
+    // ── Volatility (additional) ───────────────────────────────────────
+
+    /**
+     * Per-expiry options execution / liquidity score (0-100) — ATM bid-ask
+     * spread %, OI-weighted spread %, ATM OI depth, chain-level OI-weighted
+     * score, and best/worst expiry. Requires Growth+ plan.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject liquidity(String symbol) {
+        return get("/v1/liquidity/" + _seg(symbol));
+    }
+
+    /** Strongly-typed variant of {@link #liquidity(String)} → {@link LiquidityResponse}. */
+    public LiquidityResponse liquidityTyped(String symbol) {
+        return gson.fromJson(liquidity(symbol), LiquidityResponse.class);
+    }
+
+    /**
+     * Skew term structure with vol-desk naming — per expiry ATM IV, 25Δ / 10Δ
+     * wing IVs, {@code skew_25d}, {@code risk_reversal_25d}, {@code butterfly_25d},
+     * and {@code tail_convexity}. Requires Growth+ plan.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject skewTerm(String symbol) {
+        return get("/v1/volatility/skew-term/" + _seg(symbol));
+    }
+
+    /** Strongly-typed variant of {@link #skewTerm(String)} → {@link SkewTermResponse}. */
+    public SkewTermResponse skewTermTyped(String symbol) {
+        return gson.fromJson(skewTerm(symbol), SkewTermResponse.class);
+    }
+
+    /**
+     * Spot-vol correlation — rolling correlation between spot returns and ATM IV
+     * changes (the empirical leverage / spot-vol-beta signature). Requires
+     * Growth+ plan.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject spotVolCorrelation(String symbol) {
+        return get("/v1/volatility/spot-vol-correlation/" + _seg(symbol));
+    }
+
+    /**
+     * Implied-vs-realized correlation (dispersion / vol-arb math) between an
+     * index and a user-supplied constituent basket, with per-constituent
+     * contribution to basket vol. Requires Alpha+ plan.
+     *
+     * @param index       Index symbol (required), e.g. {@code "SPX"}.
+     * @param symbols     Comma-separated constituent symbols (required, max 50).
+     * @param weights     Comma-separated weights (nullable; equal-weighted when omitted).
+     * @param horizonDays Realized-correlation lookback in days (nullable; default 20).
+     */
+    public JsonObject dispersion(String index, String symbols, String weights, Integer horizonDays) {
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("index", index);
+        params.put("symbols", symbols);
+        if (weights != null) params.put("weights", weights);
+        if (horizonDays != null) params.put("horizon_days", String.valueOf(horizonDays));
+        return get("/v1/dispersion", params);
+    }
+
+    /** Convenience overload — equal weights, default horizon. */
+    public JsonObject dispersion(String index, String symbols) {
+        return dispersion(index, symbols, null, null);
+    }
+
+    /**
+     * Straddle-implied expected move per expiry, derived from ATM implied
+     * volatility. Requires Basic+ plan.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject expectedMove(String symbol) {
+        return expectedMove(symbol, null);
+    }
+
+    /**
+     * Expected move filtered to a single expiry.
+     *
+     * @param symbol Underlying symbol.
+     * @param expiry Expiration date filter ({@code yyyy-MM-dd}, nullable).
+     */
+    public JsonObject expectedMove(String symbol, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/expected-move/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #expectedMove(String)} → {@link ExpectedMoveResponse}. */
+    public ExpectedMoveResponse expectedMoveTyped(String symbol) {
+        return expectedMoveTyped(symbol, null);
+    }
+
+    /** Strongly-typed variant of {@link #expectedMove(String, String)}. */
+    public ExpectedMoveResponse expectedMoveTyped(String symbol, String expiry) {
+        return gson.fromJson(expectedMove(symbol, expiry), ExpectedMoveResponse.class);
+    }
+
+    /**
+     * Range-based realized (historical) volatility estimators over 10 / 20 /
+     * 30-day windows — close-to-close, Parkinson, Garman-Klass,
+     * Rogers-Satchell, and Yang-Zhang. All values annualised in percent.
+     * Requires Alpha+ plan.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject realizedVolatility(String symbol) {
+        return get("/v1/volatility/realized/" + _seg(symbol));
+    }
+
+    /**
+     * Strongly-typed variant of {@link #realizedVolatility(String)} →
+     * {@link RealizedVolatilityResponse}. The original untyped method is
+     * unchanged.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public RealizedVolatilityResponse realizedVolatilityTyped(String symbol) {
+        return gson.fromJson(realizedVolatility(symbol), RealizedVolatilityResponse.class);
+    }
+
+    /**
+     * Conditional volatility forecasts from EWMA ({@code lambda = 0.94}),
+     * HAR-RV, and GARCH(1,1) MLE — annualised vols, GARCH parameters,
+     * persistence / half-life diagnostics, and a multi-horizon forecast
+     * path. Uses the default Student-t innovation distribution. Requires
+     * Alpha+ plan.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject volatilityForecast(String symbol) {
+        return volatilityForecast(symbol, null);
+    }
+
+    /**
+     * Volatility forecast with a selectable GARCH innovation distribution.
+     *
+     * @param symbol Underlying symbol.
+     * @param dist   GARCH innovation distribution — {@code "student_t"}
+     *               (default) or {@code "gaussian"} (nullable ⇒ student_t).
+     */
+    public JsonObject volatilityForecast(String symbol, String dist) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (dist != null) params.put("dist", dist);
+        return get("/v1/volatility/forecast/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #volatilityForecast(String)} → {@link VolatilityForecastResponse}. */
+    public VolatilityForecastResponse volatilityForecastTyped(String symbol) {
+        return volatilityForecastTyped(symbol, null);
+    }
+
+    /** Strongly-typed variant of {@link #volatilityForecast(String, String)}. */
+    public VolatilityForecastResponse volatilityForecastTyped(String symbol, String dist) {
+        return gson.fromJson(volatilityForecast(symbol, dist), VolatilityForecastResponse.class);
+    }
+
+    // ── VRP (additional) ──────────────────────────────────────────────
+
+    /**
+     * Variance risk premium analytics for a specific historical {@code date}.
+     * Back-compatible extension of {@link #vrp(String)}. Requires Alpha+ plan.
+     *
+     * @param symbol Underlying symbol.
+     * @param date   Point-in-time date ({@code yyyy-MM-dd}, nullable ⇒ latest).
+     */
+    public JsonObject vrp(String symbol, String date) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (date != null) params.put("date", date);
+        return get("/v1/vrp/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #vrp(String, String)} → {@link VrpResponse}. */
+    public VrpResponse vrpTyped(String symbol, String date) {
+        return gson.fromJson(vrp(symbol, date), VrpResponse.class);
+    }
+
+    /**
+     * VRP history — a trailing series of daily VRP snapshots. Requires Alpha+ plan.
+     *
+     * @param symbol Underlying symbol.
+     * @param days   Number of trailing days (nullable).
+     */
+    public JsonObject vrpHistory(String symbol, Integer days) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (days != null) params.put("days", String.valueOf(days));
+        return get("/v1/vrp/" + _seg(symbol) + "/history", params.isEmpty() ? null : params);
+    }
+
+    /** Convenience overload — default lookback. */
+    public JsonObject vrpHistory(String symbol) {
+        return vrpHistory(symbol, null);
+    }
+
+    // ── Macro / Universe ──────────────────────────────────────────────
+
+    /** Composite VIX-state read (level, regime, term structure). Requires Growth+ plan. */
+    public JsonObject vixState() {
+        return get("/v1/macro/vix-state");
+    }
+
+    /**
+     * Curated tier-1 / tier-2 symbol directory (the pre-warmed universe).
+     * Public — no auth required.
+     *
+     * @param sort  {@code "tier"} or {@code "symbol"} (nullable).
+     * @param limit Max rows, clamped to [1, 1000] (nullable).
+     */
+    public JsonObject universe(String sort, Integer limit) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (sort != null) params.put("sort", sort);
+        if (limit != null) params.put("limit", String.valueOf(limit));
+        return get("/v1/universe", params.isEmpty() ? null : params);
+    }
+
+    /** Convenience overload — default sort and limit. */
+    public JsonObject universe() {
+        return universe(null, null);
+    }
+
+    // ── Flow (additional) ─────────────────────────────────────────────
+
+    /**
+     * Full-tape Net Dealer Premium roll-up over a configurable window.
+     * Requires the Alpha plan.
+     *
+     * @param symbol        Underlying symbol.
+     * @param windowMinutes Look-back window in minutes (nullable; default 240).
+     * @param expiry        Filter to a single expiry ({@code yyyy-MM-dd}, nullable).
+     */
+    public JsonObject flowDealerPremium(String symbol, Integer windowMinutes, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (windowMinutes != null) params.put("windowMinutes", String.valueOf(windowMinutes));
+        if (expiry != null) params.put("expiry", expiry);
+        return get("/v1/flow/options/" + _seg(symbol) + "/dealer-premium", params.isEmpty() ? null : params);
+    }
+
+    /** Convenience overload — default window, all expiries. */
+    public JsonObject flowDealerPremium(String symbol) {
+        return flowDealerPremium(symbol, null, null);
+    }
+
+    /**
+     * Per-resolution stock-flow OHLC bars over a window. Requires the Alpha plan.
+     *
+     * @param symbol     Underlying symbol.
+     * @param resolution Bar resolution (required): {@code 1s/1m/5m/15m/30m/1h/4h}.
+     * @param minutes    Look-back window in minutes (nullable).
+     */
+    public JsonObject flowStockBars(String symbol, String resolution, Integer minutes) {
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("resolution", resolution);
+        if (minutes != null) params.put("minutes", String.valueOf(minutes));
+        return get("/v1/flow/stocks/" + _seg(symbol) + "/bars", params);
+    }
+
+    // ── Zero-DTE Flow ─────────────────────────────────────────────────
+
+    /**
+     * Intraday 0DTE flow snapshot — same shape as {@link #zeroDte(String)} plus a
+     * net {@code flow_direction}. Requires Growth+ plan.
+     *
+     * @param symbol Underlying symbol.
+     */
+    public JsonObject flowZeroDteSnapshot(String symbol) {
+        return get("/v1/flow/zero-dte/snapshot/" + _seg(symbol));
+    }
+
+    /**
+     * Intraday 0DTE time series of bucketed flow. Requires Growth+ plan.
+     *
+     * @param symbol  Underlying symbol.
+     * @param bar     Bar size: {@code 30s/1m/5m/15m} (nullable).
+     * @param minutes Look-back window in minutes (nullable).
+     */
+    public JsonObject flowZeroDteSeries(String symbol, String bar, Integer minutes) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (bar != null) params.put("bar", bar);
+        if (minutes != null) params.put("minutes", String.valueOf(minutes));
+        return get("/v1/flow/zero-dte/series/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /**
+     * Intraday 0DTE dealer hedge-flow series. Requires Growth+ plan.
+     *
+     * @param symbol  Underlying symbol.
+     * @param side    {@code all/calls/puts} (nullable).
+     * @param bar     Bar size: {@code 30s/1m/5m/15m} (nullable).
+     * @param minutes Look-back window in minutes (nullable).
+     */
+    public JsonObject flowZeroDteHedgeFlow(String symbol, String side, String bar, Integer minutes) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (side != null) params.put("side", side);
+        if (bar != null) params.put("bar", bar);
+        if (minutes != null) params.put("minutes", String.valueOf(minutes));
+        return get("/v1/flow/zero-dte/hedge-flow/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /**
+     * Intraday 0DTE strike × time heatmap of a chosen metric. Requires Alpha+ plan.
+     *
+     * @param symbol  Underlying symbol.
+     * @param metric  {@code gex/dex/vex/chex/oi/signed_flow} (nullable).
+     * @param mode    {@code raw/delta} (nullable).
+     * @param bar     Bar size — {@code 1m} only (nullable).
+     * @param minutes Look-back window in minutes (nullable).
+     */
+    public JsonObject flowZeroDteHeatmap(String symbol, String metric, String mode, String bar, Integer minutes) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (metric != null) params.put("metric", metric);
+        if (mode != null) params.put("mode", mode);
+        if (bar != null) params.put("bar", bar);
+        if (minutes != null) params.put("minutes", String.valueOf(minutes));
+        return get("/v1/flow/zero-dte/heatmap/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /**
+     * Intraday 0DTE per-strike signed flow series. Requires Alpha+ plan.
+     *
+     * @param symbol  Underlying symbol.
+     * @param bar     Bar size — {@code 1m} only (nullable).
+     * @param minutes Look-back window in minutes (nullable).
+     */
+    public JsonObject flowZeroDteStrikeFlow(String symbol, String bar, Integer minutes) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (bar != null) params.put("bar", bar);
+        if (minutes != null) params.put("minutes", String.valueOf(minutes));
+        return get("/v1/flow/zero-dte/strike-flow/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    // ── Strategy Signals (×10) — shared StrategyDecisionResponse envelope ─
+
+    private JsonObject strategy(String kind, String symbol, Map<String, String> params) {
+        return get("/v1/strategies/" + kind + "/" + _seg(symbol), params == null || params.isEmpty() ? null : params);
+    }
+
+    private StrategyDecisionResponse strategyTyped(String kind, String symbol, Map<String, String> params) {
+        return gson.fromJson(strategy(kind, symbol, params), StrategyDecisionResponse.class);
+    }
+
+    /** Directional flow-anomaly strategy signal. Requires Growth+ plan. */
+    public JsonObject strategyFlowAnomaly(String symbol, String expiry) {
+        Map<String, String> p = new LinkedHashMap<>();
+        if (expiry != null) p.put("expiry", expiry);
+        return strategy("flow-anomaly", symbol, p);
+    }
+
+    /** Directional flow-anomaly strategy signal (latest expiry). */
+    public JsonObject strategyFlowAnomaly(String symbol) { return strategyFlowAnomaly(symbol, null); }
+
+    /** Strongly-typed variant of {@link #strategyFlowAnomaly(String)} → {@link StrategyDecisionResponse}. */
+    public StrategyDecisionResponse strategyFlowAnomalyTyped(String symbol) {
+        return gson.fromJson(strategyFlowAnomaly(symbol), StrategyDecisionResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #strategyFlowAnomaly(String, String)}. */
+    public StrategyDecisionResponse strategyFlowAnomalyTyped(String symbol, String expiry) {
+        return gson.fromJson(strategyFlowAnomaly(symbol, expiry), StrategyDecisionResponse.class);
+    }
+
+    /**
+     * OPEX pin / expiry-positioning strategy signal. Requires Basic+ plan.
+     *
+     * @param symbol           Underlying symbol.
+     * @param expiry           Target expiry (nullable).
+     * @param minOpenInterest  Minimum OI filter (nullable).
+     * @param wingWidth        Wing width in strikes (nullable).
+     */
+    public JsonObject strategyExpiryPositioning(String symbol, String expiry, Integer minOpenInterest, Double wingWidth) {
+        Map<String, String> p = new LinkedHashMap<>();
+        if (expiry != null) p.put("expiry", expiry);
+        if (minOpenInterest != null) p.put("minOpenInterest", String.valueOf(minOpenInterest));
+        if (wingWidth != null) p.put("wingWidth", String.valueOf(wingWidth));
+        return strategy("expiry-positioning", symbol, p);
+    }
+
+    /** Expiry-positioning strategy signal (defaults). */
+    public JsonObject strategyExpiryPositioning(String symbol) { return strategyExpiryPositioning(symbol, null, null, null); }
+
+    /** Strongly-typed variant of {@link #strategyExpiryPositioning(String)}. */
+    public StrategyDecisionResponse strategyExpiryPositioningTyped(String symbol) {
+        return gson.fromJson(strategyExpiryPositioning(symbol), StrategyDecisionResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #strategyExpiryPositioning(String, String, Integer, Double)}. */
+    public StrategyDecisionResponse strategyExpiryPositioningTyped(String symbol, String expiry, Integer minOpenInterest, Double wingWidth) {
+        return gson.fromJson(strategyExpiryPositioning(symbol, expiry, minOpenInterest, wingWidth), StrategyDecisionResponse.class);
+    }
+
+    /**
+     * 0DTE range-compression strategy signal. Requires Growth+ plan (and the
+     * 0DTE entitlement).
+     *
+     * @param symbol           Underlying symbol.
+     * @param expiry           Target expiry (nullable).
+     * @param minOpenInterest  Minimum OI filter (nullable).
+     * @param wingWidth        Wing width in strikes (nullable).
+     */
+    public JsonObject strategyZeroDte(String symbol, String expiry, Integer minOpenInterest, Double wingWidth) {
+        Map<String, String> p = new LinkedHashMap<>();
+        if (expiry != null) p.put("expiry", expiry);
+        if (minOpenInterest != null) p.put("minOpenInterest", String.valueOf(minOpenInterest));
+        if (wingWidth != null) p.put("wingWidth", String.valueOf(wingWidth));
+        return strategy("zero-dte", symbol, p);
+    }
+
+    /** 0DTE strategy signal (defaults). */
+    public JsonObject strategyZeroDte(String symbol) { return strategyZeroDte(symbol, null, null, null); }
+
+    /** Strongly-typed variant of {@link #strategyZeroDte(String)}. */
+    public StrategyDecisionResponse strategyZeroDteTyped(String symbol) {
+        return gson.fromJson(strategyZeroDte(symbol), StrategyDecisionResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #strategyZeroDte(String, String, Integer, Double)}. */
+    public StrategyDecisionResponse strategyZeroDteTyped(String symbol, String expiry, Integer minOpenInterest, Double wingWidth) {
+        return gson.fromJson(strategyZeroDte(symbol, expiry, minOpenInterest, wingWidth), StrategyDecisionResponse.class);
+    }
+
+    /** Dealer gamma-regime strategy signal. Requires Growth+ plan. */
+    public JsonObject strategyDealerRegime(String symbol, String expiry) {
+        Map<String, String> p = new LinkedHashMap<>();
+        if (expiry != null) p.put("expiry", expiry);
+        return strategy("dealer-regime", symbol, p);
+    }
+
+    /** Dealer-regime strategy signal (latest expiry). */
+    public JsonObject strategyDealerRegime(String symbol) { return strategyDealerRegime(symbol, null); }
+
+    /** Strongly-typed variant of {@link #strategyDealerRegime(String)}. */
+    public StrategyDecisionResponse strategyDealerRegimeTyped(String symbol) {
+        return gson.fromJson(strategyDealerRegime(symbol), StrategyDecisionResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #strategyDealerRegime(String, String)}. */
+    public StrategyDecisionResponse strategyDealerRegimeTyped(String symbol, String expiry) {
+        return gson.fromJson(strategyDealerRegime(symbol, expiry), StrategyDecisionResponse.class);
+    }
+
+    /**
+     * Vol-carry / VRP strategy signal. Requires Alpha+ plan.
+     *
+     * @param symbol           Underlying symbol.
+     * @param expiry           Target expiry (nullable).
+     * @param minOpenInterest  Minimum OI filter (nullable).
+     * @param targetShortDelta Target short-leg delta (nullable).
+     * @param maxWidth         Max spread width (nullable).
+     * @param minCredit        Minimum net credit (nullable).
+     */
+    public JsonObject strategyVolCarry(String symbol, String expiry, Integer minOpenInterest,
+                                       Double targetShortDelta, Double maxWidth, Double minCredit) {
+        Map<String, String> p = new LinkedHashMap<>();
+        if (expiry != null) p.put("expiry", expiry);
+        if (minOpenInterest != null) p.put("minOpenInterest", String.valueOf(minOpenInterest));
+        if (targetShortDelta != null) p.put("targetShortDelta", String.valueOf(targetShortDelta));
+        if (maxWidth != null) p.put("maxWidth", String.valueOf(maxWidth));
+        if (minCredit != null) p.put("minCredit", String.valueOf(minCredit));
+        return strategy("vol-carry", symbol, p);
+    }
+
+    /** Vol-carry strategy signal (defaults). */
+    public JsonObject strategyVolCarry(String symbol) { return strategyVolCarry(symbol, null, null, null, null, null); }
+
+    /** Strongly-typed variant of {@link #strategyVolCarry(String)}. */
+    public StrategyDecisionResponse strategyVolCarryTyped(String symbol) {
+        return gson.fromJson(strategyVolCarry(symbol), StrategyDecisionResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #strategyVolCarry(String, String, Integer, Double, Double, Double)}. */
+    public StrategyDecisionResponse strategyVolCarryTyped(String symbol, String expiry, Integer minOpenInterest,
+                                                          Double targetShortDelta, Double maxWidth, Double minCredit) {
+        return gson.fromJson(strategyVolCarry(symbol, expiry, minOpenInterest, targetShortDelta, maxWidth, minCredit),
+                StrategyDecisionResponse.class);
+    }
+
+    /**
+     * Yield-enhancement (covered-call / cash-secured-put) strategy signal.
+     * Requires Growth+ plan.
+     *
+     * @param symbol                       Underlying symbol.
+     * @param expiry                       Target expiry (nullable).
+     * @param targetDelta                  Target short-leg delta (nullable).
+     * @param minOpenInterest              Minimum OI filter (nullable).
+     * @param structure                    Structure preference (nullable).
+     * @param excludeEarningsBeforeExpiry  Skip names with earnings before expiry (nullable).
+     */
+    public JsonObject strategyYieldEnhancement(String symbol, String expiry, Double targetDelta,
+                                               Integer minOpenInterest, String structure,
+                                               Boolean excludeEarningsBeforeExpiry) {
+        Map<String, String> p = new LinkedHashMap<>();
+        if (expiry != null) p.put("expiry", expiry);
+        if (targetDelta != null) p.put("targetDelta", String.valueOf(targetDelta));
+        if (minOpenInterest != null) p.put("minOpenInterest", String.valueOf(minOpenInterest));
+        if (structure != null) p.put("structure", structure);
+        if (excludeEarningsBeforeExpiry != null) p.put("excludeEarningsBeforeExpiry", String.valueOf(excludeEarningsBeforeExpiry));
+        return strategy("yield-enhancement", symbol, p);
+    }
+
+    /** Yield-enhancement strategy signal (defaults). */
+    public JsonObject strategyYieldEnhancement(String symbol) {
+        return strategyYieldEnhancement(symbol, null, null, null, null, null);
+    }
+
+    /** Strongly-typed variant of {@link #strategyYieldEnhancement(String)}. */
+    public StrategyDecisionResponse strategyYieldEnhancementTyped(String symbol) {
+        return gson.fromJson(strategyYieldEnhancement(symbol), StrategyDecisionResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #strategyYieldEnhancement(String, String, Double, Integer, String, Boolean)}. */
+    public StrategyDecisionResponse strategyYieldEnhancementTyped(String symbol, String expiry, Double targetDelta,
+                                                                  Integer minOpenInterest, String structure,
+                                                                  Boolean excludeEarningsBeforeExpiry) {
+        return gson.fromJson(strategyYieldEnhancement(symbol, expiry, targetDelta, minOpenInterest, structure,
+                excludeEarningsBeforeExpiry), StrategyDecisionResponse.class);
+    }
+
+    /** SVI surface-anomaly strategy signal. Requires Alpha+ plan. */
+    public JsonObject strategySurfaceAnomaly(String symbol, String expiry) {
+        Map<String, String> p = new LinkedHashMap<>();
+        if (expiry != null) p.put("expiry", expiry);
+        return strategy("surface-anomaly", symbol, p);
+    }
+
+    /** Surface-anomaly strategy signal (latest expiry). */
+    public JsonObject strategySurfaceAnomaly(String symbol) { return strategySurfaceAnomaly(symbol, null); }
+
+    /** Strongly-typed variant of {@link #strategySurfaceAnomaly(String)}. */
+    public StrategyDecisionResponse strategySurfaceAnomalyTyped(String symbol) {
+        return gson.fromJson(strategySurfaceAnomaly(symbol), StrategyDecisionResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #strategySurfaceAnomaly(String, String)}. */
+    public StrategyDecisionResponse strategySurfaceAnomalyTyped(String symbol, String expiry) {
+        return gson.fromJson(strategySurfaceAnomaly(symbol, expiry), StrategyDecisionResponse.class);
+    }
+
+    /** 25-delta skew strategy signal. Requires Growth+ plan. */
+    public JsonObject strategySkew(String symbol, String expiry) {
+        Map<String, String> p = new LinkedHashMap<>();
+        if (expiry != null) p.put("expiry", expiry);
+        return strategy("skew", symbol, p);
+    }
+
+    /** Skew strategy signal (latest expiry). */
+    public JsonObject strategySkew(String symbol) { return strategySkew(symbol, null); }
+
+    /** Strongly-typed variant of {@link #strategySkew(String)}. */
+    public StrategyDecisionResponse strategySkewTyped(String symbol) {
+        return gson.fromJson(strategySkew(symbol), StrategyDecisionResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #strategySkew(String, String)}. */
+    public StrategyDecisionResponse strategySkewTyped(String symbol, String expiry) {
+        return gson.fromJson(strategySkew(symbol, expiry), StrategyDecisionResponse.class);
+    }
+
+    /** ATM term-structure strategy signal. Requires Growth+ plan. */
+    public JsonObject strategyTermStructure(String symbol) {
+        return strategy("term-structure", symbol, null);
+    }
+
+    /** Strongly-typed variant of {@link #strategyTermStructure(String)}. */
+    public StrategyDecisionResponse strategyTermStructureTyped(String symbol) {
+        return gson.fromJson(strategyTermStructure(symbol), StrategyDecisionResponse.class);
+    }
+
+    /** Downside-tail-pricing strategy signal. Requires Growth+ plan. */
+    public JsonObject strategyTailPricing(String symbol, String expiry) {
+        Map<String, String> p = new LinkedHashMap<>();
+        if (expiry != null) p.put("expiry", expiry);
+        return strategy("tail-pricing", symbol, p);
+    }
+
+    /** Tail-pricing strategy signal (latest expiry). */
+    public JsonObject strategyTailPricing(String symbol) { return strategyTailPricing(symbol, null); }
+
+    /** Strongly-typed variant of {@link #strategyTailPricing(String)}. */
+    public StrategyDecisionResponse strategyTailPricingTyped(String symbol) {
+        return gson.fromJson(strategyTailPricing(symbol), StrategyDecisionResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #strategyTailPricing(String, String)}. */
+    public StrategyDecisionResponse strategyTailPricingTyped(String symbol, String expiry) {
+        return gson.fromJson(strategyTailPricing(symbol, expiry), StrategyDecisionResponse.class);
+    }
+
+    // ── Earnings (×8) ─────────────────────────────────────────────────
+
+    /**
+     * Upcoming earnings calendar over a forward window. Requires Growth+ plan.
+     *
+     * @param days       Forward window in days (nullable; default 14).
+     * @param symbols    Comma-separated symbol filter (nullable).
+     * @param importance Minimum importance rating (nullable).
+     */
+    public JsonObject earningsCalendar(Integer days, String symbols, Integer importance) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (days != null) params.put("days", String.valueOf(days));
+        if (symbols != null) params.put("symbols", symbols);
+        if (importance != null) params.put("importance", String.valueOf(importance));
+        return get("/v1/earnings/calendar", params.isEmpty() ? null : params);
+    }
+
+    /** Earnings calendar (defaults). */
+    public JsonObject earningsCalendar() { return earningsCalendar(null, null, null); }
+
+    /** Straddle-implied earnings expected move for one symbol. Requires Growth+ plan. */
+    public JsonObject earningsExpectedMove(String symbol) {
+        return get("/v1/earnings/expected-move/" + _seg(symbol));
+    }
+
+    /**
+     * Historical post-earnings move history for one symbol. Requires Growth+ plan.
+     *
+     * @param symbol Underlying symbol.
+     * @param limit  Max prior events (nullable).
+     */
+    public JsonObject earningsHistory(String symbol, Integer limit) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (limit != null) params.put("limit", String.valueOf(limit));
+        return get("/v1/earnings/history/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Earnings history (default limit). */
+    public JsonObject earningsHistory(String symbol) { return earningsHistory(symbol, null); }
+
+    /** Earnings IV-crush profile for one symbol. Requires Growth+ plan. */
+    public JsonObject earningsIvCrush(String symbol) {
+        return get("/v1/earnings/iv-crush/" + _seg(symbol));
+    }
+
+    /** Earnings variance-risk-premium read for one symbol. Requires Alpha+ plan. */
+    public JsonObject earningsVrp(String symbol) {
+        return get("/v1/earnings/vrp/" + _seg(symbol));
+    }
+
+    /** Earnings dealer-positioning read for one symbol. Requires Alpha+ plan. */
+    public JsonObject earningsDealerPositioning(String symbol) {
+        return get("/v1/earnings/dealer-positioning/" + _seg(symbol));
+    }
+
+    /** Suggested earnings option structures for one symbol. Requires Alpha+ plan. */
+    public JsonObject earningsStrategies(String symbol) {
+        return get("/v1/earnings/strategies/" + _seg(symbol));
+    }
+
+    /**
+     * Cross-sectional earnings screener ranked by VRP richness, cheapest move,
+     * highest crush, or importance. Requires Alpha+ plan.
+     *
+     * @param sort          Ranking key (nullable; default {@code vrp_richest}).
+     * @param limit         Max rows, 1-50 (nullable).
+     * @param days          Forward window in days (nullable).
+     * @param minImportance Minimum importance rating (nullable).
+     */
+    public JsonObject earningsScreener(String sort, Integer limit, Integer days, Integer minImportance) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (sort != null) params.put("sort", sort);
+        if (limit != null) params.put("limit", String.valueOf(limit));
+        if (days != null) params.put("days", String.valueOf(days));
+        if (minImportance != null) params.put("min_importance", String.valueOf(minImportance));
+        return get("/v1/earnings/screener", params.isEmpty() ? null : params);
+    }
+
+    /** Earnings screener (defaults). */
+    public JsonObject earningsScreener() { return earningsScreener(null, null, null, null); }
+
+    // ── Structures (POST, pure-math) ──────────────────────────────────
+
+    /**
+     * At-expiry P&amp;L curve, breakevens, and max profit/loss for an arbitrary
+     * multi-leg structure. Pure math — no symbol resolution. Requires Basic+ plan.
+     *
+     * @param request Legs + optional underlying-price range and sample count.
+     */
+    public JsonObject structurePnl(StructureRequest request) {
+        return post("/v1/structures/pnl", request);
+    }
+
+    /** Strongly-typed variant of {@link #structurePnl(StructureRequest)} → {@link StructurePnlResponse}. */
+    public StructurePnlResponse structurePnlTyped(StructureRequest request) {
+        return gson.fromJson(structurePnl(request), StructurePnlResponse.class);
+    }
+
+    /**
+     * Aggregate Black-Scholes Greeks across a multi-leg position (each leg carries
+     * its own expiry + implied vol). Pure math. Requires Basic+ plan.
+     *
+     * @param request Legs + spot + optional valuation date / rate / dividend yield.
+     */
+    public JsonObject structureGreeks(StructureGreeksRequest request) {
+        return post("/v1/structures/greeks", request);
+    }
+
+    /** Strongly-typed variant of {@link #structureGreeks(StructureGreeksRequest)} → {@link StructureGreeksResponse}. */
+    public StructureGreeksResponse structureGreeksTyped(StructureGreeksRequest request) {
+        return gson.fromJson(structureGreeks(request), StructureGreeksResponse.class);
+    }
+
+    // ── Screener (additional) ─────────────────────────────────────────
+
+    /** Screener field catalogue (every selectable / filterable field). Requires any key (Free+). */
+    public JsonObject screenerFields() {
+        return get("/v1/screener/fields");
+    }
 }

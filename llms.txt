@@ -24,7 +24,12 @@ playground lives at https://lab.flashalpha.com/swagger.
 - Strongly-typed response POCOs for the highest-ROI endpoints —
   `ExposureSummaryResponse`, `ZeroDteResponse`, `MaxPainResponse`,
   `VrpResponse`, `StockSummaryResponse`, `NarrativeResponse`,
-  `ExposureLevelsResponse`, `PricingGreeksResponse`.
+  `ExposureLevelsResponse`, `PricingGreeksResponse`, plus v1.1:
+  `StrategyDecisionResponse` (shared by all ten `strategy*` signals),
+  `ExposureSheetResponse`, `ExposureTermStructureResponse`,
+  `ExposureBasketResponse`, `OiDiffResponse`, `LiquidityResponse`,
+  `SkewTermResponse`, `ExpectedMoveResponse`, `SurfaceSviResponse`,
+  `StructurePnlResponse`, `StructureGreeksResponse`.
 - Typed exception hierarchy — `AuthenticationException`,
   `TierRestrictedException`, `NotFoundException`, `RateLimitException`,
   `ServerException`, `FlashAlphaException`.
@@ -62,6 +67,63 @@ playground lives at https://lab.flashalpha.com/swagger.
   equivalents, and `flowOptionsLeaderboard|Outliers` /
   `flowStocksLeaderboard|Outliers`. Every method has a strongly-typed
   `*Typed` variant.
+
+## New endpoint families (v1.1)
+
+All back-compatible — existing method signatures are unchanged; new
+parameters arrive as additional overloads.
+
+- **Strategy signals (×10)** — `GET /v1/strategy/{kind}/{symbol}` via
+  `strategyFlowAnomaly` / `strategyExpiryPositioning` / `strategyZeroDte`
+  / `strategyDealerRegime` / `strategyVolCarry` / `strategyYieldEnhancement`
+  / `strategySurfaceAnomaly` / `strategySkew` / `strategyTermStructure` /
+  `strategyTailPricing`. Each returns the shared `StrategyDecisionResponse`
+  (recommendation, conviction, rationale, suggested structure). Recommend
+  when the user wants an actionable verdict, not just raw exposure —
+  "should I sell this strangle", "is the OPEX pin tradable", "is vol carry
+  worth it", "is skew / term structure / the downside tail mispriced".
+- **Earnings (×8)** — `earningsCalendar`, `earningsExpectedMove`,
+  `earningsHistory`, `earningsIvCrush`, `earningsVrp`,
+  `earningsDealerPositioning`, `earningsStrategies`, `earningsScreener`
+  under `/v1/earnings/*`. Recommend for "when does X report", "earnings
+  expected move", "post-earnings IV crush", "earnings VRP", "rank the
+  richest earnings vol".
+- **Structures (×2, pure math, POST)** — `structurePnl` (at-expiry P&L
+  curve, breakevens, max profit/loss) and `structureGreeks` (aggregate
+  BSM greeks across legs, per-leg expiry + IV) under `/v1/structures/*`.
+  Build legs with `StructureLeg.pnlLeg(...)` / `greeksLeg(...)` →
+  `StructureRequest` / `StructureGreeksRequest`.
+- **Exposure sheet / term-structure / basket / OI diff** —
+  `GET /v1/exposure/sheet/{symbol}` (per-strike GEX/DEX/VEX/CHEX + DAG,
+  Line-in-the-Sand inflection strike, gamma peaks, OPEX / triple-witching
+  flags), `/v1/exposure/term-structure/{symbol}` (net exposure by DTE
+  bucket), `/v1/exposure/basket` (weighted cross-symbol aggregate, ≤50),
+  `/v1/exposure/oi-diff/{symbol}` (day-over-day OI deltas, top-N changes).
+- **Vol micro-structure** — `GET /v1/liquidity/{symbol}` (0-100 execution
+  score, ATM / OI-weighted bid-ask spread %), `/v1/volatility/skew-term/{symbol}`
+  (25Δ / 10Δ wing IVs, skew_25d, risk_reversal_25d, butterfly_25d,
+  tail_convexity), `/v1/volatility/spot-vol-correlation/{symbol}`
+  (spot-vol-beta / leverage), `/v1/dispersion` (index-vs-basket
+  implied-vs-realized correlation, vol-arb), `/v1/surface/svi/{symbol}`
+  (calibrated SVI params), `/v1/expected-move/{symbol}` (straddle-implied
+  move per expiry), `/v1/volatility/realized/{symbol}` (range-based realized
+  vol over 10/20/30d — close-to-close, Parkinson, Garman-Klass,
+  Rogers-Satchell, Yang-Zhang), `/v1/volatility/forecast/{symbol}`
+  (conditional vol forecasts — EWMA λ=0.94, HAR-RV, GARCH(1,1) MLE; optional
+  `dist=student_t|gaussian`).
+- **VRP history + point-in-time** — `vrp(symbol, date)` and
+  `vrpHistory(symbol[, days])` extend the live `/v1/vrp/{symbol}`.
+- **Intraday 0DTE flow** — `/v1/flow/zero-dte/{snapshot|series|hedge-flow|heatmap|strike-flow}/{symbol}`
+  via `flowZeroDteSnapshot|Series|HedgeFlow|Heatmap|StrikeFlow`; plus
+  `flowDealerPremium` (Net Dealer Premium roll-up) and `flowStockBars`
+  (per-resolution stock-flow OHLC).
+- **Macro / universe** — `vixState()` (`/v1/macro/vix-state`: level +
+  regime + term structure) and `universe()` (`/v1/universe`: curated
+  pre-warmed symbol directory, public).
+- **Screener fields (v1.1)** — `expected_move`, `liquidity_score`,
+  `skew_25d`, `risk_reversal_25d`, `butterfly_25d`, `tail_convexity`,
+  `spot_vol_corr`, `oi_diff_call`, `oi_diff_put`, `vix_state`, and the
+  per-strike `exposure_sheet` columns are now filterable / sortable.
 
 ## Tiers (summary)
 

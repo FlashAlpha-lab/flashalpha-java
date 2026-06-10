@@ -717,4 +717,208 @@ public class ClientTest {
         assertEquals("SPY", result.get("symbol").getAsString());
         assertEquals(12345.67, result.get("gex").getAsDouble(), 0.001);
     }
+
+    // ── v1.1 new endpoint families ─────────────────────────────────────
+
+    // Strategy signals
+
+    @Test
+    public void testStrategyZeroDte() throws Exception {
+        enqueueOk();
+        client.strategyZeroDte("SPX");
+        RecordedRequest req = server.takeRequest();
+        assertEquals("GET", req.getMethod());
+        assertEquals("/v1/strategies/zero-dte/SPX", req.getPath());
+    }
+
+    @Test
+    public void testStrategyZeroDteWithParams() throws Exception {
+        enqueueOk();
+        client.strategyZeroDte("SPX", "2026-04-17", 500, 5.0);
+        RecordedRequest req = server.takeRequest();
+        String path = req.getPath();
+        assertTrue(path.startsWith("/v1/strategies/zero-dte/SPX"));
+        assertTrue(path.contains("expiry=2026-04-17"));
+        assertTrue(path.contains("minOpenInterest=500"));
+        assertTrue(path.contains("wingWidth=5.0"));
+    }
+
+    @Test
+    public void testStrategyVolCarryParsesEnvelope() throws Exception {
+        enqueue(200, "{\"strategy\":\"vol-carry\",\"symbol\":\"SPY\",\"decision\":\"sell_strangle\",\"score\":72}");
+        StrategyDecisionResponse r = client.strategyVolCarryTyped("SPY");
+        RecordedRequest req = server.takeRequest();
+        assertEquals("/v1/strategies/vol-carry/SPY", req.getPath());
+        assertEquals("sell_strangle", r.decision);
+        assertEquals(Integer.valueOf(72), r.score);
+    }
+
+    // Earnings
+
+    @Test
+    public void testEarningsCalendarDefaults() throws Exception {
+        enqueueOk();
+        client.earningsCalendar();
+        RecordedRequest req = server.takeRequest();
+        assertEquals("/v1/earnings/calendar", req.getPath());
+    }
+
+    @Test
+    public void testEarningsCalendarWithParams() throws Exception {
+        enqueueOk();
+        client.earningsCalendar(7, "AAPL,MSFT", 3);
+        RecordedRequest req = server.takeRequest();
+        String path = req.getPath();
+        assertTrue(path.contains("days=7"));
+        assertTrue(path.contains("symbols=AAPL%2CMSFT"));
+        assertTrue(path.contains("importance=3"));
+    }
+
+    @Test
+    public void testEarningsExpectedMove() throws Exception {
+        enqueueOk();
+        client.earningsExpectedMove("AAPL");
+        RecordedRequest req = server.takeRequest();
+        assertEquals("/v1/earnings/expected-move/AAPL", req.getPath());
+    }
+
+    // Structures (POST, pure math)
+
+    @Test
+    public void testStructurePnl() throws Exception {
+        enqueueOk();
+        StructureRequest request = new StructureRequest(java.util.List.of(
+                StructureLeg.pnlLeg("sell", "put", 450.0, 3.20, 1),
+                StructureLeg.pnlLeg("buy", "put", 440.0, 1.40, 1)));
+        client.structurePnl(request);
+        RecordedRequest req = server.takeRequest();
+        assertEquals("POST", req.getMethod());
+        assertEquals("/v1/structures/pnl", req.getPath());
+        String body = req.getBody().readUtf8();
+        assertTrue(body.contains("\"action\":\"sell\""));
+        assertTrue(body.contains("\"strike\":450.0"));
+        assertTrue(body.contains("\"premium\":3.2"));
+    }
+
+    @Test
+    public void testStructurePnlParsesResponse() throws Exception {
+        enqueue(200, "{\"max_profit\":1.8,\"max_loss\":-8.2,\"breakevens\":[448.2]}");
+        StructureRequest request = new StructureRequest(java.util.List.of(
+                StructureLeg.pnlLeg("sell", "put", 450.0, 3.20, 1)));
+        StructurePnlResponse r = client.structurePnlTyped(request);
+        server.takeRequest();
+        assertEquals(1.8, r.maxProfit, 0.001);
+    }
+
+    // Dispersion
+
+    @Test
+    public void testDispersion() throws Exception {
+        enqueueOk();
+        client.dispersion("SPX", "AAPL,MSFT,NVDA");
+        RecordedRequest req = server.takeRequest();
+        String path = req.getPath();
+        assertTrue(path.startsWith("/v1/dispersion"));
+        assertTrue(path.contains("index=SPX"));
+        assertTrue(path.contains("symbols=AAPL%2CMSFT%2CNVDA"));
+    }
+
+    @Test
+    public void testDispersionWithWeightsAndHorizon() throws Exception {
+        enqueueOk();
+        client.dispersion("SPX", "AAPL,MSFT", "0.6,0.4", 30);
+        RecordedRequest req = server.takeRequest();
+        String path = req.getPath();
+        assertTrue(path.contains("weights=0.6%2C0.4"));
+        assertTrue(path.contains("horizon_days=30"));
+    }
+
+    // Expected move
+
+    @Test
+    public void testExpectedMove() throws Exception {
+        enqueueOk();
+        client.expectedMove("SPY");
+        RecordedRequest req = server.takeRequest();
+        assertEquals("/v1/expected-move/SPY", req.getPath());
+    }
+
+    @Test
+    public void testExpectedMoveWithExpiry() throws Exception {
+        enqueueOk();
+        client.expectedMove("SPY", "2026-04-17");
+        RecordedRequest req = server.takeRequest();
+        assertTrue(req.getPath().contains("expiry=2026-04-17"));
+    }
+
+    // Realized volatility + forecast
+
+    @Test
+    public void testRealizedVolatility() throws Exception {
+        enqueueOk();
+        client.realizedVolatility("AAPL");
+        RecordedRequest req = server.takeRequest();
+        assertEquals("/v1/volatility/realized/AAPL", req.getPath());
+    }
+
+    @Test
+    public void testVolatilityForecast() throws Exception {
+        enqueueOk();
+        client.volatilityForecast("AAPL");
+        RecordedRequest req = server.takeRequest();
+        assertEquals("/v1/volatility/forecast/AAPL", req.getPath());
+    }
+
+    @Test
+    public void testVolatilityForecastWithDist() throws Exception {
+        enqueueOk();
+        client.volatilityForecast("AAPL", "gaussian");
+        RecordedRequest req = server.takeRequest();
+        String path = req.getPath();
+        assertTrue(path.startsWith("/v1/volatility/forecast/AAPL"));
+        assertTrue(path.contains("dist=gaussian"));
+    }
+
+    // VRP history + point-in-time
+
+    @Test
+    public void testVrpHistory() throws Exception {
+        enqueueOk();
+        client.vrpHistory("SPY", 30);
+        RecordedRequest req = server.takeRequest();
+        String path = req.getPath();
+        assertTrue(path.startsWith("/v1/vrp/SPY/history"));
+        assertTrue(path.contains("days=30"));
+    }
+
+    @Test
+    public void testVrpWithDate() throws Exception {
+        enqueueOk();
+        client.vrp("SPY", "2026-03-20");
+        RecordedRequest req = server.takeRequest();
+        String path = req.getPath();
+        assertTrue(path.startsWith("/v1/vrp/SPY"));
+        assertTrue(path.contains("date=2026-03-20"));
+    }
+
+    @Test
+    public void testVrpBackCompatNoDate() throws Exception {
+        enqueueOk();
+        client.vrp("SPY");
+        RecordedRequest req = server.takeRequest();
+        assertEquals("/v1/vrp/SPY", req.getPath());
+    }
+
+    // Zero-DTE expiry overload
+
+    @Test
+    public void testZeroDteWithExpiry() throws Exception {
+        enqueueOk();
+        client.zeroDte("SPX", 0.05, "2026-04-17");
+        RecordedRequest req = server.takeRequest();
+        String path = req.getPath();
+        assertTrue(path.startsWith("/v1/exposure/zero-dte/SPX"));
+        assertTrue(path.contains("strike_range=0.05"));
+        assertTrue(path.contains("expiry=2026-04-17"));
+    }
 }
