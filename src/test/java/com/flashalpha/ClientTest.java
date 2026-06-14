@@ -921,4 +921,53 @@ public class ClientTest {
         assertTrue(path.contains("strike_range=0.05"));
         assertTrue(path.contains("expiry=2026-04-17"));
     }
+
+    // Zero-DTE flow snapshot expiry overload
+
+    @Test
+    public void testFlowZeroDteSnapshotNoExpiry() throws Exception {
+        enqueueOk();
+        client.flowZeroDteSnapshot("SPX");
+        RecordedRequest req = server.takeRequest();
+        assertEquals("/v1/flow/zero-dte/snapshot/SPX", req.getPath());
+    }
+
+    @Test
+    public void testFlowZeroDteSnapshotWithExpiry() throws Exception {
+        enqueueOk();
+        client.flowZeroDteSnapshot("SPX", "2026-04-17");
+        RecordedRequest req = server.takeRequest();
+        String path = req.getPath();
+        assertTrue(path.startsWith("/v1/flow/zero-dte/snapshot/SPX"));
+        assertTrue(path.contains("expiry=2026-04-17"));
+    }
+
+    @Test
+    public void testFlowZeroDteSnapshotBlankExpiryOmitted() throws Exception {
+        enqueueOk();
+        client.flowZeroDteSnapshot("SPX", "  ");
+        RecordedRequest req = server.takeRequest();
+        assertEquals("/v1/flow/zero-dte/snapshot/SPX", req.getPath());
+    }
+
+    // Zero-DTE flow leaderboard (no symbol path segment)
+
+    @Test
+    public void testFlowZeroDteLeaderboardNoParams() throws Exception {
+        enqueueOk();
+        client.flowZeroDteLeaderboard();
+        RecordedRequest req = server.takeRequest();
+        assertEquals("/v1/flow/zero-dte/leaderboard", req.getPath());
+    }
+
+    @Test
+    public void testFlowZeroDteLeaderboardWithParams() throws Exception {
+        enqueueOk();
+        client.flowZeroDteLeaderboard("pin_risk", 25);
+        RecordedRequest req = server.takeRequest();
+        String path = req.getPath();
+        assertTrue(path.startsWith("/v1/flow/zero-dte/leaderboard"));
+        assertTrue(path.contains("metric=pin_risk"));
+        assertTrue(path.contains("n=25"));
+    }
 }

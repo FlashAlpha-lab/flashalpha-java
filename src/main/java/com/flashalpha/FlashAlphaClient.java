@@ -1969,7 +1969,19 @@ public class FlashAlphaClient {
      * @param symbol Underlying symbol.
      */
     public JsonObject flowZeroDteSnapshot(String symbol) {
-        return get("/v1/flow/zero-dte/snapshot/" + _seg(symbol));
+        return flowZeroDteSnapshot(symbol, null);
+    }
+
+    /**
+     * Intraday 0DTE flow snapshot sliced to one expiration cycle. Requires Growth+ plan.
+     *
+     * @param symbol Underlying symbol.
+     * @param expiry Expiration date filter, {@code YYYY-MM-DD} (nullable).
+     */
+    public JsonObject flowZeroDteSnapshot(String symbol, String expiry) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null && !expiry.isBlank()) params.put("expiry", expiry);
+        return get("/v1/flow/zero-dte/snapshot/" + _seg(symbol), params.isEmpty() ? null : params);
     }
 
     /**
@@ -2032,6 +2044,26 @@ public class FlashAlphaClient {
         if (bar != null) params.put("bar", bar);
         if (minutes != null) params.put("minutes", String.valueOf(minutes));
         return get("/v1/flow/zero-dte/strike-flow/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /**
+     * Cross-symbol 0DTE flow leaderboard (no symbol path segment). Requires Alpha+ plan.
+     */
+    public JsonObject flowZeroDteLeaderboard() {
+        return flowZeroDteLeaderboard(null, null);
+    }
+
+    /**
+     * Cross-symbol 0DTE flow leaderboard ranked by a chosen metric. Requires Alpha+ plan.
+     *
+     * @param metric {@code heat/pin_risk/abs_flow/charm_intensity} (nullable).
+     * @param n      Number of symbols to return, 1–100 (nullable).
+     */
+    public JsonObject flowZeroDteLeaderboard(String metric, Integer n) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (metric != null) params.put("metric", metric);
+        if (n != null) params.put("n", String.valueOf(n));
+        return get("/v1/flow/zero-dte/leaderboard", params.isEmpty() ? null : params);
     }
 
     // ── Strategy Signals (×10) — shared StrategyDecisionResponse envelope ─
