@@ -148,26 +148,26 @@ All methods return `com.google.gson.JsonObject`.
 |--------|-------------|------|
 | `gex(symbol)` | Gamma exposure by strike | Any |
 | `gex(symbol, expiration, minOi)` | Gamma exposure with filters | Any |
-| `dex(symbol)` | Delta exposure by strike | Any |
-| `dex(symbol, expiration)` | Delta exposure filtered by expiration | Any |
-| `vex(symbol)` | Vanna exposure by strike | Any |
-| `vex(symbol, expiration)` | Vanna exposure filtered by expiration | Any |
-| `chex(symbol)` | Charm exposure by strike | Any |
-| `chex(symbol, expiration)` | Charm exposure filtered by expiration | Any |
+| `dex(symbol)` | Delta exposure by strike | Basic+ |
+| `dex(symbol, expiration)` | Delta exposure filtered by expiration | Basic+ |
+| `vex(symbol)` | Vanna exposure by strike | Basic+ |
+| `vex(symbol, expiration)` | Vanna exposure filtered by expiration | Basic+ |
+| `chex(symbol)` | Charm exposure by strike | Basic+ |
+| `chex(symbol, expiration)` | Charm exposure filtered by expiration | Basic+ |
 | `exposureLevels(symbol)` | Key support/resistance levels | Any |
 | `exposureSummary(symbol)` | Full GEX/DEX/VEX/CHEX + hedging summary | Growth+ |
 | `narrative(symbol)` | Verbal narrative analysis of exposure | Growth+ |
 | `zeroDte(symbol)` | Real-time 0DTE analytics | Growth+ |
 | `zeroDte(symbol, strikeRange)` | 0DTE analytics with custom strike range | Growth+ |
 | `zeroDte(symbol, strikeRange, expiry)` | 0DTE analytics for a specific expiry | Growth+ |
-| `maxPain(symbol)` | Max pain analysis with dealer alignment, pain curve, pin probability | Growth+ |
-| `maxPain(symbol, expiration)` | Max pain for a single expiry | Growth+ |
+| `maxPain(symbol)` | Max pain analysis with dealer alignment, pain curve, pin probability | Basic+ |
+| `maxPain(symbol, expiration)` | Max pain for a single expiry | Basic+ |
 | `exposureSheet(symbol[, expiration, minOi])` | Unified per-strike sheet — GEX/DEX/VEX/CHEX + DAG, chain totals, Line-in-the-Sand inflection strike, gamma peaks, OPEX / triple-witching flags | Growth+ |
 | `exposureTermStructure(symbol)` | Net GEX/DEX/VEX/CHEX aggregated by DTE bucket and rolled up per expiry | Growth+ |
 | `exposureBasket(symbols[, weights])` | Weighted cross-symbol exposure basket — aggregate net GEX/DEX/VEX/CHEX across up to 50 symbols | Growth+ |
 | `oiDiff(symbol[, topN])` | Day-over-day open-interest deltas, top-N changes by magnitude, call/put aggregate totals | Growth+ |
 
-### Flow (live, simulation-aware) — requires the Alpha plan
+### Flow (live, simulation-aware) — Growth+ (raw tape, unusual-flow signals, OI simulator state & the full live bundle are Alpha)
 
 Each method has a strongly-typed `*Typed` variant (e.g. `flowLevelsTyped`).
 
@@ -355,16 +355,18 @@ MIT. See [LICENSE](LICENSE).
 - [Volatility Surface Python](https://github.com/FlashAlpha-lab/volatility-surface-python) — SVI calibration, variance swap, skew analysis
 - [Awesome Options Analytics](https://github.com/FlashAlpha-lab/awesome-options-analytics) — curated resource list
 
-## What the Alpha tier unlocks
+## What the paid tiers unlock
 
-Free and entry tiers cover live exposure analytics. The **Alpha tier ($1,499/mo)**
-adds the data you cannot get anywhere else:
+The free tier covers single-expiry GEX on equities, key levels, the BSM Greeks/IV
+calculator and stock quotes. Paid tiers add:
 
-- **Aggregate vanna and charm exposure.** FlashAlpha is the only public source for
-  these dealer-positioning aggregates.
-- **Point-in-time replay since 2018.** Backtest and trade the same code, with no
-  look-ahead and no training-serving skew.
-- **SVI vol surfaces, VRP analytics, higher-order Greeks**, uncached and unlimited.
+- **DEX, VEX (vanna) and CHEX (charm) exposure, plus max pain** — from the **Basic tier**
+  ($79/mo), with ETF and index symbols.
+- **Full-chain GEX, 0DTE and flow analytics** — from the **Growth tier** ($299/mo).
+- **Point-in-time replay since 2018, SVI vol surfaces, VRP analytics, higher-order Greeks**,
+  uncached and unlimited — the **Alpha tier** ($1,499/mo). FlashAlpha is one of the only
+  public APIs publishing aggregate vanna and charm exposure across the full universe, with
+  no look-ahead and no training-serving skew.
 
 Built for quants, prop desks, and vol funds. See the full picture and get a key:
 **[flashalpha.com/for-quant-teams](https://flashalpha.com/for-quant-teams?utm_source=github&utm_medium=readme&utm_campaign=repo-flashalpha-java)**
