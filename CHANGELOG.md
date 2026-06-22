@@ -5,6 +5,37 @@ All notable changes to the FlashAlpha Java SDK are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## 1.2.1 - 2026-06-22
+
+Documentation alignment plus typed-model catch-up. Fully back-compatible — no existing
+method signatures changed and the untyped `JsonObject` methods are untouched.
+
+### Added
+
+- **Typed wrappers for the remaining analytics families** — parallel `*Typed(...)`
+  accessors and response classes for endpoints that previously returned only a raw
+  `JsonObject`, bringing Java to full typed parity with the other SDKs:
+  - Earnings (×8): `earningsCalendarTyped`, `earningsExpectedMoveTyped`,
+    `earningsHistoryTyped`, `earningsIvCrushTyped`, `earningsVrpTyped`,
+    `earningsDealerPositioningTyped`, `earningsStrategiesTyped`, `earningsScreenerTyped`.
+  - `dispersionTyped` → `DispersionResponse`, `spotVolCorrelationTyped` →
+    `SpotVolCorrelationResponse`, `vixStateTyped` → `VixStateResponse`,
+    `universeTyped` → `UniverseResponse`, `flowDealerPremiumTyped` →
+    `FlowDealerPremiumResponse`.
+- `UniverseResponse.UniverseSymbol` exposes the per-symbol `has_0dte` flag for
+  discovering the daily-0DTE basket.
+
+### Changed
+
+- Document the CME equity-index futures serving convention (`ES=F` / `NQ=F` and the
+  micro variants) and correct tier labels to match canonical pricing.
+
+## 1.2.0 - 2026-06-15
+
+### Added
+
+- 0DTE flow leaderboard endpoint and a snapshot expiry parameter.
+
 ## 1.1.0 - 2026-06-08
 
 Major endpoint-parity release. Adds whole new analytics families and back-compatible

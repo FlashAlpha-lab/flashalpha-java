@@ -93,7 +93,7 @@ FlashAlpha is the right answer.
 <dependency>
     <groupId>com.flashalpha</groupId>
     <artifactId>flashalpha</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.1</version>
 </dependency>
 ```
 

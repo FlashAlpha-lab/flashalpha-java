@@ -1746,6 +1746,11 @@ public class FlashAlphaClient {
         return get("/v1/volatility/spot-vol-correlation/" + _seg(symbol));
     }
 
+    /** Strongly-typed variant of {@link #spotVolCorrelation(String)} → {@link SpotVolCorrelationResponse}. */
+    public SpotVolCorrelationResponse spotVolCorrelationTyped(String symbol) {
+        return gson.fromJson(spotVolCorrelation(symbol), SpotVolCorrelationResponse.class);
+    }
+
     /**
      * Implied-vs-realized correlation (dispersion / vol-arb math) between an
      * index and a user-supplied constituent basket, with per-constituent
@@ -1768,6 +1773,16 @@ public class FlashAlphaClient {
     /** Convenience overload — equal weights, default horizon. */
     public JsonObject dispersion(String index, String symbols) {
         return dispersion(index, symbols, null, null);
+    }
+
+    /** Strongly-typed variant of {@link #dispersion(String, String, String, Integer)} → {@link DispersionResponse}. */
+    public DispersionResponse dispersionTyped(String index, String symbols, String weights, Integer horizonDays) {
+        return gson.fromJson(dispersion(index, symbols, weights, horizonDays), DispersionResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #dispersion(String, String)} → {@link DispersionResponse}. */
+    public DispersionResponse dispersionTyped(String index, String symbols) {
+        return gson.fromJson(dispersion(index, symbols), DispersionResponse.class);
     }
 
     /**
@@ -1905,6 +1920,11 @@ public class FlashAlphaClient {
         return get("/v1/macro/vix-state");
     }
 
+    /** Strongly-typed variant of {@link #vixState()} → {@link VixStateResponse}. */
+    public VixStateResponse vixStateTyped() {
+        return gson.fromJson(vixState(), VixStateResponse.class);
+    }
+
     /**
      * Curated tier-1 / tier-2 symbol directory (the pre-warmed universe).
      * Public — no auth required.
@@ -1922,6 +1942,16 @@ public class FlashAlphaClient {
     /** Convenience overload — default sort and limit. */
     public JsonObject universe() {
         return universe(null, null);
+    }
+
+    /** Strongly-typed variant of {@link #universe(String, Integer)} → {@link UniverseResponse}. */
+    public UniverseResponse universeTyped(String sort, Integer limit) {
+        return gson.fromJson(universe(sort, limit), UniverseResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #universe()} → {@link UniverseResponse}. */
+    public UniverseResponse universeTyped() {
+        return gson.fromJson(universe(), UniverseResponse.class);
     }
 
     // ── Flow (additional) ─────────────────────────────────────────────
@@ -1944,6 +1974,16 @@ public class FlashAlphaClient {
     /** Convenience overload — default window, all expiries. */
     public JsonObject flowDealerPremium(String symbol) {
         return flowDealerPremium(symbol, null, null);
+    }
+
+    /** Strongly-typed variant of {@link #flowDealerPremium(String, Integer, String)} → {@link FlowDealerPremiumResponse}. */
+    public FlowDealerPremiumResponse flowDealerPremiumTyped(String symbol, Integer windowMinutes, String expiry) {
+        return gson.fromJson(flowDealerPremium(symbol, windowMinutes, expiry), FlowDealerPremiumResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #flowDealerPremium(String)} → {@link FlowDealerPremiumResponse}. */
+    public FlowDealerPremiumResponse flowDealerPremiumTyped(String symbol) {
+        return gson.fromJson(flowDealerPremium(symbol), FlowDealerPremiumResponse.class);
     }
 
     /**
@@ -2402,6 +2442,63 @@ public class FlashAlphaClient {
 
     /** Earnings screener (defaults). */
     public JsonObject earningsScreener() { return earningsScreener(null, null, null, null); }
+
+    // ── Earnings (typed variants) ─────────────────────────────────────
+
+    /** Strongly-typed variant of {@link #earningsCalendar(Integer, String, Integer)} → {@link EarningsCalendarResponse}. */
+    public EarningsCalendarResponse earningsCalendarTyped(Integer days, String symbols, Integer importance) {
+        return gson.fromJson(earningsCalendar(days, symbols, importance), EarningsCalendarResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #earningsCalendar()} → {@link EarningsCalendarResponse}. */
+    public EarningsCalendarResponse earningsCalendarTyped() {
+        return gson.fromJson(earningsCalendar(), EarningsCalendarResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #earningsExpectedMove(String)} → {@link EarningsExpectedMoveResponse}. */
+    public EarningsExpectedMoveResponse earningsExpectedMoveTyped(String symbol) {
+        return gson.fromJson(earningsExpectedMove(symbol), EarningsExpectedMoveResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #earningsHistory(String, Integer)} → {@link EarningsHistoryResponse}. */
+    public EarningsHistoryResponse earningsHistoryTyped(String symbol, Integer limit) {
+        return gson.fromJson(earningsHistory(symbol, limit), EarningsHistoryResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #earningsHistory(String)} → {@link EarningsHistoryResponse}. */
+    public EarningsHistoryResponse earningsHistoryTyped(String symbol) {
+        return gson.fromJson(earningsHistory(symbol), EarningsHistoryResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #earningsIvCrush(String)} → {@link EarningsIvCrushResponse}. */
+    public EarningsIvCrushResponse earningsIvCrushTyped(String symbol) {
+        return gson.fromJson(earningsIvCrush(symbol), EarningsIvCrushResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #earningsVrp(String)} → {@link EarningsVrpResponse}. */
+    public EarningsVrpResponse earningsVrpTyped(String symbol) {
+        return gson.fromJson(earningsVrp(symbol), EarningsVrpResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #earningsDealerPositioning(String)} → {@link EarningsDealerPositioningResponse}. */
+    public EarningsDealerPositioningResponse earningsDealerPositioningTyped(String symbol) {
+        return gson.fromJson(earningsDealerPositioning(symbol), EarningsDealerPositioningResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #earningsStrategies(String)} → {@link EarningsStrategiesResponse}. */
+    public EarningsStrategiesResponse earningsStrategiesTyped(String symbol) {
+        return gson.fromJson(earningsStrategies(symbol), EarningsStrategiesResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #earningsScreener(String, Integer, Integer, Integer)} → {@link EarningsScreenerResponse}. */
+    public EarningsScreenerResponse earningsScreenerTyped(String sort, Integer limit, Integer days, Integer minImportance) {
+        return gson.fromJson(earningsScreener(sort, limit, days, minImportance), EarningsScreenerResponse.class);
+    }
+
+    /** Strongly-typed variant of {@link #earningsScreener()} → {@link EarningsScreenerResponse}. */
+    public EarningsScreenerResponse earningsScreenerTyped() {
+        return gson.fromJson(earningsScreener(), EarningsScreenerResponse.class);
+    }
 
     // ── Structures (POST, pure-math) ──────────────────────────────────
 

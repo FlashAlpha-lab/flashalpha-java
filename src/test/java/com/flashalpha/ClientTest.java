@@ -970,4 +970,146 @@ public class ClientTest {
         assertTrue(path.contains("metric=pin_risk"));
         assertTrue(path.contains("n=25"));
     }
+
+    // ── Typed deserialization for newly-typed endpoints ────────────────
+
+    @Test
+    public void testEarningsCalendarTypedParses() throws Exception {
+        enqueue(200, "{\"count\":1,\"events\":[{\"symbol\":\"AAPL\",\"company_name\":\"Apple Inc.\","
+                + "\"earnings_date\":\"2026-07-30\",\"timing\":\"amc\",\"is_confirmed\":true,"
+                + "\"importance\":5,\"eps_estimate\":1.42,\"implied_move_pct\":4.8,\"days_to_event\":38}]}");
+        EarningsCalendarResponse r = client.earningsCalendarTyped();
+        server.takeRequest();
+        assertEquals(Integer.valueOf(1), r.count);
+        assertEquals("AAPL", r.events.get(0).symbol);
+        assertEquals(Boolean.TRUE, r.events.get(0).isConfirmed);
+        assertEquals(4.8, r.events.get(0).impliedMovePct, 0.001);
+    }
+
+    @Test
+    public void testEarningsExpectedMoveTypedParsesNestedBlock() throws Exception {
+        enqueue(200, "{\"symbol\":\"AAPL\",\"underlying_price\":230.5,\"earnings_date\":\"2026-07-30\","
+                + "\"expected_move\":{\"raw_straddle_pct\":5.1,\"earnings_implied_pct\":4.6,\"earnings_iv\":0.62}}");
+        EarningsExpectedMoveResponse r = client.earningsExpectedMoveTyped("AAPL");
+        server.takeRequest();
+        assertNotNull(r.expectedMove);
+        assertEquals(4.6, r.expectedMove.earningsImpliedPct, 0.001);
+        assertEquals(0.62, r.expectedMove.earningsIv, 0.001);
+    }
+
+    @Test
+    public void testEarningsHistoryTypedParsesRows() throws Exception {
+        enqueue(200, "{\"symbol\":\"AAPL\",\"count\":1,\"history\":[{\"date\":\"2026-05-01\","
+                + "\"eps_surprise_pct\":3.2,\"actual_move_pct\":-2.1,\"iv_crush_pct\":31.0}]}");
+        EarningsHistoryResponse r = client.earningsHistoryTyped("AAPL");
+        server.takeRequest();
+        assertEquals(-2.1, r.history.get(0).actualMovePct, 0.001);
+        assertEquals(31.0, r.history.get(0).ivCrushPct, 0.001);
+    }
+
+    @Test
+    public void testEarningsIvCrushTypedParsesDistribution() throws Exception {
+        enqueue(200, "{\"symbol\":\"AAPL\",\"current_estimate\":{\"expected_crush_pct\":28.0,\"pre_iv\":0.6,\"post_iv\":0.43},"
+                + "\"distribution\":{\"median\":30.0,\"p25\":22.0,\"p75\":38.0,\"count\":12}}");
+        EarningsIvCrushResponse r = client.earningsIvCrushTyped("AAPL");
+        server.takeRequest();
+        assertEquals(28.0, r.currentEstimate.expectedCrushPct, 0.001);
+        assertEquals(Integer.valueOf(12), r.distribution.count);
+    }
+
+    @Test
+    public void testEarningsVrpTypedParsesBlocks() throws Exception {
+        enqueue(200, "{\"symbol\":\"AAPL\",\"earnings_vrp\":{\"premium_ratio\":1.35,\"assessment\":\"rich\"},"
+                + "\"surprise_reaction\":{\"beat_avg_move_pct\":3.1,\"miss_avg_move_pct\":-5.2}}");
+        EarningsVrpResponse r = client.earningsVrpTyped("AAPL");
+        server.takeRequest();
+        assertEquals("rich", r.earningsVrp.assessment);
+        assertEquals(-5.2, r.surpriseReaction.missAvgMovePct, 0.001);
+    }
+
+    @Test
+    public void testEarningsDealerPositioningTypedParsesNested() throws Exception {
+        enqueue(200, "{\"symbol\":\"AAPL\",\"regime\":\"negative_gamma\",\"levels\":{\"gamma_flip\":228.0,\"call_wall\":240.0},"
+                + "\"gex_by_dte_bucket\":[{\"bucket\":\"event_week\",\"net_gex\":-1.2e8,\"contract_count\":50}],"
+                + "\"top_strikes\":[{\"strike\":230.0,\"net_gex\":-5.0e7,\"call_oi\":12000,\"put_oi\":15000}]}");
+        EarningsDealerPositioningResponse r = client.earningsDealerPositioningTyped("AAPL");
+        server.takeRequest();
+        assertEquals("negative_gamma", r.regime);
+        assertEquals(240.0, r.levels.callWall, 0.001);
+        assertEquals("event_week", r.gexByDteBucket.get(0).bucket);
+        assertEquals(Long.valueOf(15000), r.topStrikes.get(0).putOi);
+    }
+
+    @Test
+    public void testEarningsStrategiesTypedParsesScores() throws Exception {
+        enqueue(200, "{\"symbol\":\"AAPL\",\"scores\":{\"long_straddle\":40,\"short_strangle\":75,\"iron_condor\":68},"
+                + "\"context\":{\"premium_ratio\":1.3,\"regime\":\"negative_gamma\"}}");
+        EarningsStrategiesResponse r = client.earningsStrategiesTyped("AAPL");
+        server.takeRequest();
+        assertEquals(Integer.valueOf(75), r.scores.shortStrangle);
+        assertEquals("negative_gamma", r.context.regime);
+    }
+
+    @Test
+    public void testEarningsScreenerTypedParses() throws Exception {
+        enqueue(200, "{\"count\":1,\"events\":[{\"symbol\":\"NVDA\",\"premium_ratio\":1.6,\"assessment\":\"rich\",\"days_to_event\":5}]}");
+        EarningsScreenerResponse r = client.earningsScreenerTyped();
+        server.takeRequest();
+        assertEquals("NVDA", r.events.get(0).symbol);
+        assertEquals(1.6, r.events.get(0).premiumRatio, 0.001);
+    }
+
+    @Test
+    public void testDispersionTypedParsesContributors() throws Exception {
+        enqueue(200, "{\"index\":\"SPX\",\"constituent_count\":3,\"implied_correlation\":0.45,\"realized_correlation\":0.38,"
+                + "\"correlation_premium\":0.07,\"top_contributors\":[{\"symbol\":\"NVDA\",\"weight\":0.12,\"iv\":0.55,"
+                + "\"contribution_to_basket_vol\":0.066}]}");
+        DispersionResponse r = client.dispersionTyped("SPX", "AAPL,MSFT,NVDA");
+        server.takeRequest();
+        assertEquals(0.07, r.correlationPremium, 0.001);
+        assertEquals("NVDA", r.topContributors.get(0).symbol);
+        assertEquals(0.066, r.topContributors.get(0).contributionToBasketVol, 0.0001);
+    }
+
+    @Test
+    public void testSpotVolCorrelationTypedParses() throws Exception {
+        enqueue(200, "{\"symbol\":\"SPY\",\"spot_vol_correlation_20d\":-0.82,\"spot_vol_correlation_60d\":-0.75,"
+                + "\"data_points_20d\":20,\"interpretation\":\"strong negative\"}");
+        SpotVolCorrelationResponse r = client.spotVolCorrelationTyped("SPY");
+        server.takeRequest();
+        assertEquals(-0.82, r.spotVolCorrelation20d, 0.001);
+        assertEquals(Integer.valueOf(20), r.dataPoints20d);
+    }
+
+    @Test
+    public void testVixStateTypedParses() throws Exception {
+        enqueue(200, "{\"vix\":18.5,\"spx_rv_20d\":12.0,\"spread\":6.5,\"ratio\":1.54,\"state\":\"overvixing\"}");
+        VixStateResponse r = client.vixStateTyped();
+        server.takeRequest();
+        assertEquals("overvixing", r.state);
+        assertEquals(6.5, r.spread, 0.001);
+    }
+
+    @Test
+    public void testUniverseTypedParsesHas0dte() throws Exception {
+        enqueue(200, "{\"count\":2,\"returned\":2,\"sort\":\"tier\",\"symbols\":["
+                + "{\"symbol\":\"SPY\",\"tier\":1,\"is_pre_warmed\":true,\"has_0dte\":true},"
+                + "{\"symbol\":\"AAPL\",\"tier\":1,\"is_pre_warmed\":true,\"has_0dte\":false}]}");
+        UniverseResponse r = client.universeTyped();
+        server.takeRequest();
+        assertEquals(Boolean.TRUE, r.symbols.get(0).has0dte);
+        assertEquals(Boolean.FALSE, r.symbols.get(1).has0dte);
+        assertEquals(Integer.valueOf(1), r.symbols.get(0).tier);
+    }
+
+    @Test
+    public void testFlowDealerPremiumTypedParses() throws Exception {
+        enqueue(200, "{\"symbol\":\"SPY\",\"window_minutes\":240,\"dealer_buy_premium\":1.2e6,"
+                + "\"dealer_write_premium\":8.0e5,\"net_dealer_premium\":4.0e5,\"trade_count\":1234}");
+        FlowDealerPremiumResponse r = client.flowDealerPremiumTyped("SPY");
+        server.takeRequest();
+        assertEquals(Integer.valueOf(240), r.windowMinutes);
+        assertEquals(400000.0, r.netDealerPremium, 1.0);
+        assertEquals(Long.valueOf(1234), r.tradeCount);
+    }
 }
