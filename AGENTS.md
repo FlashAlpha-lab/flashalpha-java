@@ -146,5 +146,5 @@ public class Example {
 - Playground: https://lab.flashalpha.com/swagger
 - Sign up: https://flashalpha.com
 - Source: https://github.com/FlashAlpha-lab/flashalpha-java
-- Historical replay (point-in-time, back to 2018-04-16):
+- Historical replay (point-in-time, back to 2017-01-03):
   `flashalpha-historical` artifact / `flashalpha-historical-java` repo.
