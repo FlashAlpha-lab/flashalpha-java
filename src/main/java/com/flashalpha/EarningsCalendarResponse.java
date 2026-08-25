@@ -11,7 +11,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#earningsCalendarTyped()}.
  */
-public final class EarningsCalendarResponse {
+public final class EarningsCalendarResponse extends FlashAlphaResponse {
 
     @SerializedName("events")
     public List<EarningsCalendarEvent> events;

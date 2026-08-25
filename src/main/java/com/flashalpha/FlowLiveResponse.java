@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Typed response for {@code GET /v1/flow/live/{symbol}} (Alpha+). Everything-at-once convenience bundle: OI simulator state + live exposure + live levels + pin risk + the nested dealer-risk block.
  */
-public final class FlowLiveResponse {
+public final class FlowLiveResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")

@@ -11,7 +11,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#universeTyped()}.
  */
-public final class UniverseResponse {
+public final class UniverseResponse extends FlashAlphaResponse {
 
     @SerializedName("as_of")
     public String asOf;

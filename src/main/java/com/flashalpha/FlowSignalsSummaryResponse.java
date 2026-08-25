@@ -9,7 +9,7 @@ import java.util.List;
  * bullish/bearish and opening/closing buckets — a cheap "smart-money
  * tilt" read for one underlying.
  */
-public final class FlowSignalsSummaryResponse {
+public final class FlowSignalsSummaryResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")

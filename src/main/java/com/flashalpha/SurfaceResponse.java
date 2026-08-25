@@ -14,7 +14,7 @@ import java.util.List;
  * <p>{@link #slicesUsed} reports how many per-expiry slices fed the fit
  * — useful for sanity-checking sparsity warnings.
  */
-public final class SurfaceResponse {
+public final class SurfaceResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

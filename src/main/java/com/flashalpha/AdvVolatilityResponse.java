@@ -16,7 +16,7 @@ import java.util.List;
  * <p>The grid surfaces are stored as {@code number[][]} — outer index is
  * strike, inner index is expiry (or vice versa, see each block).
  */
-public final class AdvVolatilityResponse {
+public final class AdvVolatilityResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

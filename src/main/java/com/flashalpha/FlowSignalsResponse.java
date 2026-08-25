@@ -9,7 +9,7 @@ import java.util.List;
  * look-back window is coalesced into a signal, scored 0–100, and ranked
  * highest score first.
  */
-public final class FlowSignalsResponse {
+public final class FlowSignalsResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")

@@ -12,7 +12,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#earningsDealerPositioningTyped(String)}.
  */
-public final class EarningsDealerPositioningResponse {
+public final class EarningsDealerPositioningResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

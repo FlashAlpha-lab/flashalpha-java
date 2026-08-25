@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Typed response for {@code GET /v1/flow/options/{symbol}/recent} (Alpha+). Newest-first option trade tape. {@code expiry} is echoed only when the filter is supplied.
  */
-public final class FlowOptionRecentResponse {
+public final class FlowOptionRecentResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")

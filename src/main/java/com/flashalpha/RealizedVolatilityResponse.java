@@ -15,7 +15,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * <p>Obtain via {@link FlashAlphaClient#realizedVolatilityTyped(String)}.
  */
-public final class RealizedVolatilityResponse {
+public final class RealizedVolatilityResponse extends FlashAlphaResponse {
 
     /** Resolved, upper-cased underlying symbol. */
     @SerializedName("symbol")

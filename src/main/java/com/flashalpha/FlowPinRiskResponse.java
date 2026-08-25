@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Typed response for {@code GET /v1/flow/pin-risk/{symbol}} (Alpha+). A 0-100 composite pin-risk score plus the magnet strike and breakdown.
  */
-public final class FlowPinRiskResponse {
+public final class FlowPinRiskResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")

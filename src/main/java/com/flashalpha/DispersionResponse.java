@@ -13,7 +13,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#dispersionTyped(String, String)}.
  */
-public final class DispersionResponse {
+public final class DispersionResponse extends FlashAlphaResponse {
 
     @SerializedName("as_of")
     public String asOf;

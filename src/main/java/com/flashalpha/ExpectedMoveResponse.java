@@ -16,7 +16,7 @@ import java.util.List;
  * <p>Obtain via {@link FlashAlphaClient#expectedMoveTyped(String)} or
  * {@link FlashAlphaClient#expectedMoveTyped(String, String)}.
  */
-public final class ExpectedMoveResponse {
+public final class ExpectedMoveResponse extends FlashAlphaResponse {
 
     /** Resolved, upper-cased underlying symbol. */
     @SerializedName("symbol")

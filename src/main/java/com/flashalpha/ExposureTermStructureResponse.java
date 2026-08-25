@@ -12,7 +12,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#exposureTermStructureTyped(String)}.
  */
-public final class ExposureTermStructureResponse {
+public final class ExposureTermStructureResponse extends FlashAlphaResponse {
 
     /** Resolved underlying symbol. */
     @SerializedName("symbol")

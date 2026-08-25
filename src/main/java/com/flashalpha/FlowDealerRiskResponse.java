@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Typed response for {@code GET /v1/flow/dealer-risk/{symbol}} (Alpha+). Side-by-side of the settled snapshot and the live flow-adjusted book.
  */
-public final class FlowDealerRiskResponse {
+public final class FlowDealerRiskResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")

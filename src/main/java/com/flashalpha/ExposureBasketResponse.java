@@ -11,7 +11,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#exposureBasketTyped(String, String)}.
  */
-public final class ExposureBasketResponse {
+public final class ExposureBasketResponse extends FlashAlphaResponse {
 
     /** ISO 8601 UTC build time. */
     @SerializedName("as_of")

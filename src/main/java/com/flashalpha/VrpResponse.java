@@ -29,7 +29,7 @@ import java.util.List;
  * <p>All numeric fields are boxed wrappers ({@link Double}, {@link Integer})
  * so {@code null} can represent values the API could not compute.
  */
-public final class VrpResponse {
+public final class VrpResponse extends FlashAlphaResponse {
 
     /** Echoed from the request path (e.g. "SPY"). */
     @SerializedName("symbol")

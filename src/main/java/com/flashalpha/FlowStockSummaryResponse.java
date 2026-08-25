@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Typed response for {@code GET /v1/flow/stocks/{symbol}/summary} (Alpha+). Per-symbol stock-flow aggregates.
  */
-public final class FlowStockSummaryResponse {
+public final class FlowStockSummaryResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")

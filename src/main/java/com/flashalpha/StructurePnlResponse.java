@@ -11,7 +11,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#structurePnlTyped(StructureRequest)}.
  */
-public final class StructurePnlResponse {
+public final class StructurePnlResponse extends FlashAlphaResponse {
 
     /** Echo of the request legs (action / type / strike / premium / quantity). */
     @SerializedName("legs")

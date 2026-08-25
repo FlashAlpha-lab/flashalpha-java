@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Typed response for {@code GET /v1/flow/oi/{symbol}} (Alpha+). Settled (official) OI vs the intraday simulated OI. This endpoint does NOT return {@code underlying_price}.
  */
-public final class FlowOiResponse {
+public final class FlowOiResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")

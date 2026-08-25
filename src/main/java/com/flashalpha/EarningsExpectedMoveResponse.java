@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * <p>Obtain via {@link FlashAlphaClient#earningsExpectedMoveTyped(String)}.
  */
-public final class EarningsExpectedMoveResponse {
+public final class EarningsExpectedMoveResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

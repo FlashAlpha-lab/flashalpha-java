@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Typed response for {@code GET /v1/flow/options/{symbol}/cumulative} (Alpha+).
  */
-public final class FlowOptionCumulativeResponse {
+public final class FlowOptionCumulativeResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")
