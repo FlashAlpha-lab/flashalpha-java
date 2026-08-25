@@ -37,7 +37,7 @@ public final class DataAsOf {
     @SerializedName("equity_options_feed")
     public String equityOptionsFeed;
 
-    /** Index spot - SPX, NDX, RUT, VIX. Ticks in seconds during market hours. */
+    /** Index spot - SPX, RUT, VIX and the other index roots. Ticks in seconds during market hours. */
     @SerializedName("index_feed")
     public String indexFeed;
 
