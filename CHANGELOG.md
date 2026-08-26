@@ -5,6 +5,29 @@ All notable changes to the FlashAlpha Java SDK are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## 1.4.0 - 2026-08-26
+
+### Fixed
+- **Bare-array endpoints no longer throw.** `handleResponse` called `getAsJsonObject()`
+  on every 200, which raises `IllegalStateException` on a JSON array - so an unfiltered
+  `optionQuote` call failed with an opaque cast error. The javadoc had been documenting
+  a workaround rather than the fix. The untyped accessor now raises a
+  `FlashAlphaException` naming the accessor to use instead.
+
+### Added
+- **`optionQuoteWithMetadata`** returns an `OptionQuotes` holder with the full chain and
+  a `ResponseMeta` carrying `endpointVersion` and `dataAsOf` - 6,407 quotes on a live
+  unfiltered SPY call, where the previous call threw. Array bodies have nowhere to hold
+  an envelope, so the API sends provenance in the `X-Data-As-Of` and `X-Endpoint-Version`
+  headers; this is the only way to reach it for such an endpoint.
+- `ResponseMeta` and `OptionQuotes`. A malformed or absent header leaves `dataAsOf` null
+  rather than failing the call - provenance is diagnostic, and losing it should never
+  turn a good response into an error.
+
+### Notes
+- A new private `getRaw` keeps the whole response so both the array body and the headers
+  survive; object-bodied endpoints are unchanged.
+
 ## 1.3.0 - 2026-08-25
 
 ### Added

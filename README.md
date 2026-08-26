@@ -86,8 +86,8 @@ public class Example {
 
 Every successful JSON-object response carries `data_as_of`, reporting when each upstream
 feed last delivered to the node that answered, plus `endpoint_version` identifying the
-deployment that produced it. That is every method on this client except the handful that
-return a bare JSON array - see the note at the end of this section.
+deployment that produced it. The handful of endpoints that return a bare JSON array carry
+it in response headers instead - see the note at the end of this section.
 
 ```java
 GexResponse gex = client.gexTyped("SPY");
@@ -139,9 +139,23 @@ null and still parse.
 
 A few endpoints return a bare JSON array, which has nowhere to put an envelope in the
 body. The API sends the same information in the `X-Data-As-Of` and `X-Endpoint-Version`
-response headers instead - but this client returns the parsed body only and does not
-surface response headers, so the envelope is **not reachable through those methods**.
-Call the HTTP endpoint directly if you need provenance for one of them.
+response headers instead, and the `*WithMetadata` accessors return both together:
+
+```java
+OptionQuotes result = client.optionQuoteWithMetadata("SPY");
+
+result.quotes.size();                       // 6407 - the whole chain
+result.meta.dataAsOf.equityOptionsFeed;     // provenance, read from the response headers
+result.meta.endpointVersion;
+```
+
+The untyped `optionQuote(...)` returns a `JsonObject`, which cannot represent an array;
+calling it on this endpoint raises a `FlashAlphaException` pointing here rather than an
+opaque cast failure.
+
+A malformed or absent `X-Data-As-Of` leaves `result.meta.dataAsOf` null rather than
+failing the call - provenance is diagnostic, and losing it should not turn a good
+response into an error.
 
 Full reference: <https://flashalpha.com/docs/lab-api-overview#response-envelope> and the
 methodology whitepaper at <https://flashalpha.com/methodology#freshness-reporting>.
