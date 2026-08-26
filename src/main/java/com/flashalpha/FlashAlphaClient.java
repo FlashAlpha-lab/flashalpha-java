@@ -1,6 +1,7 @@
 package com.flashalpha;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -13,6 +14,8 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -89,6 +92,17 @@ public class FlashAlphaClient {
     }
 
     private JsonObject get(String path, Map<String, String> params) {
+        return handleResponse(getRaw(path, params));
+    }
+
+    /**
+     * GET that returns the whole response rather than a parsed object.
+     *
+     * <p>Needed because {@code handleResponse} calls {@code getAsJsonObject()}, which
+     * throws on a bare JSON array - and because array-bodied endpoints carry their
+     * envelope in headers, which a parsed body discards.
+     */
+    private HttpResponse<String> getRaw(String path, Map<String, String> params) {
         String url = baseUrl + path;
         if (params != null && !params.isEmpty()) {
             url = url + "?" + buildQuery(params);
@@ -110,7 +124,7 @@ public class FlashAlphaClient {
             throw new FlashAlphaException("HTTP request failed: " + e.getMessage(), 0, null);
         }
 
-        return handleResponse(response);
+        return response;
     }
 
     private JsonObject post(String path, Object body) {
@@ -142,7 +156,15 @@ public class FlashAlphaClient {
         String body = response.body();
 
         if (status == 200) {
-            return JsonParser.parseString(body).getAsJsonObject();
+            JsonElement parsed = JsonParser.parseString(body);
+            if (parsed.isJsonArray()) {
+                throw new FlashAlphaException(
+                        "This endpoint returned a JSON array, which cannot be represented as a "
+                                + "JsonObject. Use the *WithMetadata accessor (for example "
+                                + "optionQuoteWithMetadata) to get the rows and the response envelope.",
+                        status, null);
+            }
+            return parsed.getAsJsonObject();
         }
 
         // Try to parse error body as JSON
@@ -287,6 +309,67 @@ public class FlashAlphaClient {
      *
      * @param ticker Stock ticker symbol.
      */
+    /**
+     * Every option quote for a ticker, together with the response envelope.
+     *
+     * <p>Unfiltered, {@code /optionquote} returns a bare JSON array. That shape cannot be
+     * carried on a single response model, and an array body has nowhere to hold an
+     * envelope - the API sends provenance in the {@code X-Data-As-Of} and
+     * {@code X-Endpoint-Version} headers instead. This method is the only way to get both.
+     *
+     * @param ticker Stock ticker symbol.
+     * @return the quotes plus their provenance.
+     */
+    public OptionQuotes optionQuoteWithMetadata(String ticker) {
+        return optionQuoteWithMetadata(ticker, null, null, null);
+    }
+
+    /**
+     * Filtered option quotes together with the response envelope.
+     *
+     * <p>With filters the endpoint returns a single object rather than an array; both
+     * shapes are accepted here and normalised to a list.
+     *
+     * @param ticker Stock ticker symbol.
+     * @param expiry Optional expiry filter (YYYY-MM-DD).
+     * @param strike Optional strike filter.
+     * @param type   Optional contract type ("call" / "put").
+     * @return the quotes plus their provenance.
+     */
+    public OptionQuotes optionQuoteWithMetadata(String ticker, String expiry, Double strike, String type) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null) params.put("expiry", expiry);
+        if (strike != null) params.put("strike", String.valueOf(strike));
+        if (type != null) params.put("type", type);
+
+        HttpResponse<String> response = getRaw("/optionquote/" + ticker, params);
+        ResponseMeta meta = ResponseMeta.from(response.headers(), gson);
+
+        if (response.statusCode() != 200) {
+            handleResponse(response); // reuse the shared error mapping
+        }
+
+        JsonElement parsed = JsonParser.parseString(response.body());
+        List<OptionQuoteResponse> quotes = new ArrayList<>();
+
+        if (parsed.isJsonArray()) {
+            for (JsonElement e : parsed.getAsJsonArray()) {
+                quotes.add(gson.fromJson(e, OptionQuoteResponse.class));
+            }
+        } else if (parsed.isJsonObject()) {
+            JsonObject obj = parsed.getAsJsonObject();
+            if (obj.has("quotes") && obj.get("quotes").isJsonArray()) {
+                for (JsonElement e : obj.getAsJsonArray("quotes")) {
+                    quotes.add(gson.fromJson(e, OptionQuoteResponse.class));
+                }
+            } else {
+                quotes.add(gson.fromJson(obj, OptionQuoteResponse.class));
+            }
+        }
+
+        return new OptionQuotes(quotes, meta);
+    }
+
     public OptionQuoteResponse optionQuoteTyped(String ticker) {
         return optionQuoteTyped(ticker, null, null, null);
     }
