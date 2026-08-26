@@ -11,7 +11,7 @@ import java.util.List;
  * {@link #note} on coverage and the {@link #lastUpdated} timestamp of the
  * latest refresh.
  */
-public final class SymbolsResponse {
+public final class SymbolsResponse extends FlashAlphaResponse {
 
     /** Symbols currently being polled for live analytics. */
     @SerializedName("symbols")

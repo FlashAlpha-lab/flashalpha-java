@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * <p>Obtain via {@link FlashAlphaClient#vixStateTyped()}.
  */
-public final class VixStateResponse {
+public final class VixStateResponse extends FlashAlphaResponse {
 
     @SerializedName("as_of")
     public String asOf;

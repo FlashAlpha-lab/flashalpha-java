@@ -11,7 +11,7 @@ import com.google.gson.annotations.SerializedName;
  * <p><b>Camel-case fields:</b> {@code lastPrice} and {@code lastUpdate}
  * are camelCase on the wire.
  */
-public final class StockQuoteResponse {
+public final class StockQuoteResponse extends FlashAlphaResponse {
 
     @SerializedName("ticker")
     public String ticker;

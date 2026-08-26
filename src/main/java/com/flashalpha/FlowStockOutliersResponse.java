@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Typed response for {@code GET /v1/flow/stocks/outliers} (Alpha+, cached ~30s).
  */
-public final class FlowStockOutliersResponse {
+public final class FlowStockOutliersResponse extends FlashAlphaResponse {
 
     /** When the cached snapshot was generated (ISO-8601 UTC). */
     @SerializedName("generatedUtc")

@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Typed response for {@code GET /v1/flow/dex/{symbol}} (Alpha+). Live (flow-adjusted) DEX with the same per-strike shape as {@link DexResponse} (reuses {@link DexResponse.DexStrikeRow}).
  */
-public final class FlowDexResponse {
+public final class FlowDexResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")

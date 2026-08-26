@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * <p>Obtain via {@link FlashAlphaClient#earningsIvCrushTyped(String)}.
  */
-public final class EarningsIvCrushResponse {
+public final class EarningsIvCrushResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

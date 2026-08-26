@@ -14,7 +14,7 @@ import java.util.List;
  * <p>Obtain via {@link FlashAlphaClient#exposureSheetTyped(String)} or
  * {@link FlashAlphaClient#exposureSheetTyped(String, String, Integer)}.
  */
-public final class ExposureSheetResponse {
+public final class ExposureSheetResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol") public String symbol;
     @SerializedName("underlying_price") public Double underlyingPrice;

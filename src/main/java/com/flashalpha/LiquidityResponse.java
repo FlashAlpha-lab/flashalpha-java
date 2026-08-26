@@ -11,7 +11,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#liquidityTyped(String)}.
  */
-public final class LiquidityResponse {
+public final class LiquidityResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

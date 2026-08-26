@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Typed response for {@code GET /v1/flow/options/{symbol}/blocks} (Alpha+). All trades with {@code size &gt;= minSize}, newest-first.
  */
-public final class FlowOptionBlocksResponse {
+public final class FlowOptionBlocksResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")

@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Typed response for {@code GET /v1/flow/levels/{symbol}} (Alpha+). Gamma flip / call &amp; put walls / max pain recomputed against the live (intraday-flow-adjusted) book; each level is {@code null} when it can't be located.
  */
-public final class FlowLevelsResponse {
+public final class FlowLevelsResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")

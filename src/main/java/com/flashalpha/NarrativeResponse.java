@@ -21,7 +21,7 @@ import java.util.List;
  * <a href="https://lab.flashalpha.com">https://lab.flashalpha.com</a>
  * and <a href="https://flashalpha.com">https://flashalpha.com</a>.
  */
-public final class NarrativeResponse {
+public final class NarrativeResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

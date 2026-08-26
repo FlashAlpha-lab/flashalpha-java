@@ -11,7 +11,7 @@ import java.util.List;
  * grid at each expiration. Counts ({@link #expirationCount},
  * {@link #totalContracts}) summarise the chain breadth.
  */
-public final class OptionsMetaResponse {
+public final class OptionsMetaResponse extends FlashAlphaResponse {
 
     /** Echoed from the request path (e.g. {@code "SPY"}). */
     @SerializedName("symbol")

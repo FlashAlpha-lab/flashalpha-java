@@ -12,7 +12,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#skewTermTyped(String)}.
  */
-public final class SkewTermResponse {
+public final class SkewTermResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

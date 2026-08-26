@@ -5,6 +5,33 @@ All notable changes to the FlashAlpha Java SDK are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## 1.3.0 - 2026-08-25
+
+### Added
+- **`data_as_of` response envelope.** Every successful response now carries
+  `data_as_of`, reporting when each upstream feed last delivered to the node that
+  answered: equity and index spot, their option chains, futures and futures
+  options, the classified trade tape, settled open interest, and the macro series,
+  each reported separately because they arrive over different pipes and fail
+  independently. `endpoint_version` identifies the deployment that produced the
+  response.
+- **`DataAsOf`** model and a `FlashAlphaResponse` base carrying `endpointVersion`
+  and `dataAsOf`. All 75 response models now extend it, so the envelope is a typed
+  member rather than a field Gson silently discards. Gson reflects over the full
+  class hierarchy, so the wire shape is unchanged; both members are objects, so
+  responses predating the envelope leave them null and still parse.
+
+### Notes
+- Read each feed against its own cadence rather than against `as_of`. Settled open
+  interest dated to the previous session's close is correct, since it is published
+  once per session; an options feed an hour behind during the regular session is
+  not.
+- A `null` means that node has not seen that feed, not that it is broken.
+- The field evidences that a feed delivered recently. It does not assert that every
+  contract in a chain is equally current.
+- Endpoints returning a bare JSON array carry the same information in the
+  `X-Data-As-Of` and `X-Endpoint-Version` response headers.
+
 ## 1.2.1 - 2026-06-22
 
 Documentation alignment plus typed-model catch-up. Fully back-compatible — no existing

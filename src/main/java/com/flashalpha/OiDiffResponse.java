@@ -11,7 +11,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#oiDiffTyped(String, Integer)}.
  */
-public final class OiDiffResponse {
+public final class OiDiffResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

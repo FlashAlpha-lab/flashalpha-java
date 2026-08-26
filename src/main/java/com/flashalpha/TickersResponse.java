@@ -10,7 +10,7 @@ import java.util.List;
  * <p>Lists every ticker the live API will accept. {@link #count} mirrors
  * {@code tickers.size()}.
  */
-public final class TickersResponse {
+public final class TickersResponse extends FlashAlphaResponse {
 
     /** All available stock ticker symbols. */
     @SerializedName("tickers")

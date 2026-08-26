@@ -29,7 +29,7 @@ import java.util.List;
  * {@link Integer}, {@link Boolean}) so {@code null} can represent values
  * the API could not compute.
  */
-public final class StockSummaryResponse {
+public final class StockSummaryResponse extends FlashAlphaResponse {
 
     /** Echoed from the request path (e.g. {@code "SPY"}). */
     @SerializedName("symbol")

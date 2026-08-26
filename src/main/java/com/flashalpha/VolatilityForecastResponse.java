@@ -18,7 +18,7 @@ import java.util.List;
  * <p>Obtain via {@link FlashAlphaClient#volatilityForecastTyped(String)} or
  * {@link FlashAlphaClient#volatilityForecastTyped(String, String)}.
  */
-public final class VolatilityForecastResponse {
+public final class VolatilityForecastResponse extends FlashAlphaResponse {
 
     /** Resolved, upper-cased underlying symbol. */
     @SerializedName("symbol")

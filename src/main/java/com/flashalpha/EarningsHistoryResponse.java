@@ -11,7 +11,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#earningsHistoryTyped(String)}.
  */
-public final class EarningsHistoryResponse {
+public final class EarningsHistoryResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

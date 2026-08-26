@@ -10,7 +10,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * <p>Obtain via {@link FlashAlphaClient#flowDealerPremiumTyped(String)}.
  */
-public final class FlowDealerPremiumResponse {
+public final class FlowDealerPremiumResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

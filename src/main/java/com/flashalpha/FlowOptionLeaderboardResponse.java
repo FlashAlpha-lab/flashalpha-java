@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Typed response for {@code GET /v1/flow/options/leaderboard} (Alpha+). Top-N net-dollar buyers and sellers (cached ~30s).
  */
-public final class FlowOptionLeaderboardResponse {
+public final class FlowOptionLeaderboardResponse extends FlashAlphaResponse {
 
     /** When the cached snapshot was generated (ISO-8601 UTC). */
     @SerializedName("generatedUtc")

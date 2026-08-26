@@ -15,7 +15,7 @@ import com.google.gson.annotations.SerializedName;
  * <a href="https://lab.flashalpha.com">https://lab.flashalpha.com</a>
  * and <a href="https://flashalpha.com">https://flashalpha.com</a>.
  */
-public final class PricingIvResponse {
+public final class PricingIvResponse extends FlashAlphaResponse {
 
     /** Echo of the request inputs. */
     @SerializedName("inputs")

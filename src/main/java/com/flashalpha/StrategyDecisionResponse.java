@@ -36,7 +36,7 @@ import java.util.Map;
  * vanna / charm exposure, dealer hedging, 0DTE pin risk, max pain, VRP, and now
  * strategy-suitability scoring. See <a href="https://flashalpha.com">flashalpha.com</a>.
  */
-public final class StrategyDecisionResponse {
+public final class StrategyDecisionResponse extends FlashAlphaResponse {
 
     /** Which strategy produced this result (e.g. {@code "flow_anomaly"}, {@code "vol_carry"}). */
     @SerializedName("strategy")

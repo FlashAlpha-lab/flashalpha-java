@@ -11,7 +11,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#earningsScreenerTyped()}.
  */
-public final class EarningsScreenerResponse {
+public final class EarningsScreenerResponse extends FlashAlphaResponse {
 
     @SerializedName("events")
     public List<EarningsScreenerEvent> events;

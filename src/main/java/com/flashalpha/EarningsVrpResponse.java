@@ -10,7 +10,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * <p>Obtain via {@link FlashAlphaClient#earningsVrpTyped(String)}.
  */
-public final class EarningsVrpResponse {
+public final class EarningsVrpResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

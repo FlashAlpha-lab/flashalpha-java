@@ -12,7 +12,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#structureGreeksTyped(StructureGreeksRequest)}.
  */
-public final class StructureGreeksResponse {
+public final class StructureGreeksResponse extends FlashAlphaResponse {
 
     /** Underlying spot priced against. */
     @SerializedName("spot")

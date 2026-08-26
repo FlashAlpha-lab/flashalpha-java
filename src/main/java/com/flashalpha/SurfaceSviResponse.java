@@ -12,7 +12,7 @@ import java.util.List;
  *
  * <p>Obtain via {@link FlashAlphaClient#surfaceSviTyped(String)}.
  */
-public final class SurfaceSviResponse {
+public final class SurfaceSviResponse extends FlashAlphaResponse {
 
     /** Resolved, upper-cased underlying symbol. */
     @SerializedName("symbol")

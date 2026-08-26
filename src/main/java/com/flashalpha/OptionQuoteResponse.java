@@ -17,7 +17,7 @@ import com.google.gson.annotations.SerializedName;
  * single-contract variant (all of {@code expiry} + {@code strike} +
  * {@code type} supplied) returns a single object.
  */
-public final class OptionQuoteResponse {
+public final class OptionQuoteResponse extends FlashAlphaResponse {
 
     /** Option type: {@code "call"} or {@code "put"}. */
     @SerializedName("type")

@@ -15,7 +15,7 @@ import java.util.List;
  * move at that strike. Aggregated across all strikes it equals
  * {@link #netGex}.
  */
-public final class GexResponse {
+public final class GexResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

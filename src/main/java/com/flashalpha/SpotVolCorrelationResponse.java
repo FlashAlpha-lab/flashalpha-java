@@ -10,7 +10,7 @@ import com.google.gson.annotations.SerializedName;
  *
  * <p>Obtain via {@link FlashAlphaClient#spotVolCorrelationTyped(String)}.
  */
-public final class SpotVolCorrelationResponse {
+public final class SpotVolCorrelationResponse extends FlashAlphaResponse {
 
     @SerializedName("symbol")
     public String symbol;

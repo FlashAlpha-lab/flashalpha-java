@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Typed response for {@code GET /v1/flow/gex/{symbol}} (Alpha+). Live (flow-adjusted) GEX with the same per-strike shape as {@link GexResponse} (reuses {@link GexResponse.GexStrikeRow}).
  */
-public final class FlowGexResponse {
+public final class FlowGexResponse extends FlashAlphaResponse {
 
     /** Underlying ticker echoed from the request path. */
     @SerializedName("symbol")
