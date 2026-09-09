@@ -152,6 +152,7 @@ with a key.
 
 ```java
 import com.flashalpha.FlashAlphaClient;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 public class Example {
@@ -162,7 +163,17 @@ public class Example {
         // Full GEX / DEX / VEX / CHEX + hedging summary
         JsonObject exposure = client.exposureSummary("SPY");
         System.out.println("regime    = " + exposure.get("regime").getAsString());
-        System.out.println("gamma_flip = " + exposure.get("gamma_flip").getAsDouble());
+
+        // gamma_flip is nullable. Read gamma_flip_status to learn why a level
+        // is missing; never call getAsDouble() on it unguarded.
+        JsonElement flip = exposure.get("gamma_flip");
+        if (flip != null && !flip.isJsonNull()) {
+            System.out.println("gamma_flip = " + flip.getAsDouble());
+        } else {
+            JsonElement why = exposure.get("gamma_flip_status");
+            System.out.println("gamma_flip = unavailable ("
+                + (why != null && !why.isJsonNull() ? why.getAsString() : "unknown") + ")");
+        }
 
         // Max pain with dealer alignment
         JsonObject maxPain = client.maxPain("SPY");
@@ -171,6 +182,44 @@ public class Example {
     }
 }
 ```
+
+## Nullable levels: `gamma_flip` and `gamma_flip_status`
+
+`gamma_flip` is **nullable and frequently null** — roughly two chains in
+three withhold it. The API only publishes a flip level when it can stand
+behind it, so treat a missing level as normal, not as an outage.
+
+Every block that carries `gamma_flip` also carries a sibling
+`gamma_flip_status` (a plain `String`, exposed as `gammaFlipStatus` on the
+typed models). It reads `"available"` when a level was published, otherwise
+a reason code:
+
+| Status | Meaning |
+| --- | --- |
+| `available` | A flip level is published in `gamma_flip`. |
+| `no_boundary` | Net GEX never changes sign across the chain. |
+| `stored_sign_mismatch` | Stored and recomputed gamma signs disagree. |
+| `insufficient_local_coverage` | Too few strikes around the crossing. |
+| `insufficient_quote_quality` | Quotes near the crossing are not trustworthy. |
+| `sensitive_root` | The crossing moves too much under small perturbations. |
+| `uncertain_root_path` | Multiple candidate crossings, none dominant. |
+| `search_budget` / `quality_budget` | The solver stopped before it could confirm a level. |
+
+On the live flow endpoints (`/v1/flow/levels`, `/v1/flow/gex`,
+`/v1/flow/live`) the value field is named `live_gamma_flip`, but its status
+sibling is still named plain **`gamma_flip_status`** — there is no
+`live_gamma_flip_status`. Searching for the `live_` prefix will miss it.
+
+New codes can be added without a major version, so **never switch
+exhaustively on this value** — the models type it as `String`, not an enum,
+for exactly that reason. Treat anything other than `"available"` as "no flip
+level", and surface the code itself when explaining why.
+
+When the flip is withheld, `regime` reads `"unknown"` rather than
+`"positive_gamma"` / `"negative_gamma"`, and the gamma-dependent VRP outputs
+return null. The fields derived from the flip (`spot_vs_flip`,
+`spot_to_flip_pct`, `distance_to_flip_dollars`, `distance_to_flip_sigmas`)
+have nothing to compute against, so guard them the same way.
 
 ## Style notes when editing this SDK
 

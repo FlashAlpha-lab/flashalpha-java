@@ -78,6 +78,8 @@ public final class NarrativeResponse extends FlashAlphaResponse {
         @SerializedName("vix") public Double vix;
         /** Strike where net dealer gamma crosses zero. */
         @SerializedName("gamma_flip") public Double gammaFlip;
+        /** {@code "available"}, or the reason {@link #gammaFlip} was withheld (e.g. {@code "no_boundary"}). Treat any value other than {@code "available"} as no flip level. */
+        @SerializedName("gamma_flip_status") public String gammaFlipStatus;
         /** Strike with the highest absolute call GEX. */
         @SerializedName("call_wall") public Double callWall;
         /** Strike with the highest absolute put GEX. */

@@ -185,6 +185,8 @@ public final class VrpResponse extends FlashAlphaResponse {
         /** Net dealer gamma exposure in dollars per 1% spot move. */
         @SerializedName("net_gex") public Double netGex;
         @SerializedName("gamma_flip") public Double gammaFlip;
+        /** {@code "available"}, or the reason {@link #gammaFlip} was withheld (e.g. {@code "no_boundary"}). Treat any value other than {@code "available"} as no flip level. */
+        @SerializedName("gamma_flip_status") public String gammaFlipStatus;
     }
 
     /** 0-100 suitability scores for canonical short-vol strategies. Each field can be {@code null} when inputs aren't computable. */

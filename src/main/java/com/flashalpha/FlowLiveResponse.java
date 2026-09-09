@@ -63,6 +63,20 @@ public final class FlowLiveResponse extends FlashAlphaResponse {
     @SerializedName("live_gamma_flip")
     public Double liveGammaFlip;
 
+    /**
+     * Why {@link #liveGammaFlip} is populated or withheld. Reads {@code "available"}
+     * when a flip level was published, otherwise a reason code such as
+     * {@code "no_boundary"}, {@code "insufficient_local_coverage"} or
+     * {@code "sensitive_root"}. New codes can be added at any time, so treat
+     * any value other than {@code "available"} as no flip level available.
+     *
+     * <p>The wire name is {@code gamma_flip_status}, <em>not</em>
+     * {@code live_gamma_flip_status}, even though the value it explains is
+     * {@code live_gamma_flip}.
+     */
+    @SerializedName("gamma_flip_status")
+    public String gammaFlipStatus;
+
     /** Live call wall strike, or null. */
     @SerializedName("live_call_wall")
     public Double liveCallWall;
