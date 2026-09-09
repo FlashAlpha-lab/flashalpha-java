@@ -51,6 +51,8 @@ public final class EarningsDealerPositioningResponse extends FlashAlphaResponse 
     /** The {@code levels} block. */
     public static final class EarningsDealerLevels {
         @SerializedName("gamma_flip") public Double gammaFlip;
+        /** {@code "available"}, or the reason {@link #gammaFlip} was withheld (e.g. {@code "no_boundary"}). Treat any value other than {@code "available"} as no flip level. */
+        @SerializedName("gamma_flip_status") public String gammaFlipStatus;
         @SerializedName("call_wall") public Double callWall;
         @SerializedName("put_wall") public Double putWall;
         @SerializedName("highest_oi_strike") public Double highestOiStrike;

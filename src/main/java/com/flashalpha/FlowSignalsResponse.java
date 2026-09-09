@@ -59,5 +59,7 @@ public final class FlowSignalsResponse extends FlashAlphaResponse {
         @SerializedName("max_pain") public Double maxPain;
         /** Settled gamma-flip strike (sign change of net GEX across the chain). */
         @SerializedName("gamma_flip") public Double gammaFlip;
+        /** {@code "available"}, or the reason {@link #gammaFlip} was withheld (e.g. {@code "no_boundary"}). Treat any value other than {@code "available"} as no flip level. */
+        @SerializedName("gamma_flip_status") public String gammaFlipStatus;
     }
 }
