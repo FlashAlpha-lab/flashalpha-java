@@ -205,16 +205,21 @@ a reason code:
 | `uncertain_root_path` | Multiple candidate crossings, none dominant. |
 | `search_budget` / `quality_budget` | The solver stopped before it could confirm a level. |
 
+On the live flow endpoints (`/v1/flow/levels`, `/v1/flow/gex`,
+`/v1/flow/live`) the value field is named `live_gamma_flip`, but its status
+sibling is still named plain **`gamma_flip_status`** — there is no
+`live_gamma_flip_status`. Searching for the `live_` prefix will miss it.
+
 New codes can be added without a major version, so **never switch
 exhaustively on this value** — the models type it as `String`, not an enum,
 for exactly that reason. Treat anything other than `"available"` as "no flip
 level", and surface the code itself when explaining why.
 
 When the flip is withheld, `regime` reads `"unknown"` rather than
-`"positive_gamma"` / `"negative_gamma"`. Fields derived from the flip
-(`spot_vs_flip`, `spot_to_flip_pct`, `distance_to_flip_dollars`,
-`distance_to_flip_sigmas`) have nothing to compute against, so guard them
-the same way.
+`"positive_gamma"` / `"negative_gamma"`, and the gamma-dependent VRP outputs
+return null. The fields derived from the flip (`spot_vs_flip`,
+`spot_to_flip_pct`, `distance_to_flip_dollars`, `distance_to_flip_sigmas`)
+have nothing to compute against, so guard them the same way.
 
 ## Style notes when editing this SDK
 
