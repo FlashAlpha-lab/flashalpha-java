@@ -2362,6 +2362,29 @@ public class FlashAlphaClient {
         return gson.fromJson(strategyTailPricing(symbol, expiry), StrategyDecisionResponse.class);
     }
 
+    // ── sell-window (own response shape) ──────────────────────────────
+
+    /**
+     * Should you sell options today? One answer per session for SPY, QQQ and IWM, built
+     * from more than 5 million backtests. For four listed expiries (same day, then the
+     * expiries closest to one week, two weeks and one month out) each window says
+     * {@code sell}, {@code skip} or {@code unavailable}. On a sell it lists the trades to
+     * place, with strikes, quotes and the exit rule.
+     *
+     * <p>Requires Basic+ through November 2026, Growth+ from December 1, 2026.
+     *
+     * @param symbol {@code SPY}, {@code QQQ} or {@code IWM}. Any other symbol returns every window as unavailable.
+     * @return the raw JSON answer. Use {@link #sellWindowTyped(String)} for the typed response.
+     */
+    public JsonObject sellWindow(String symbol) {
+        return get("/v1/strategies/sell-window/" + _seg(symbol));
+    }
+
+    /** Strongly-typed variant of {@link #sellWindow(String)} → {@link SellWindowResponse}. */
+    public SellWindowResponse sellWindowTyped(String symbol) {
+        return gson.fromJson(sellWindow(symbol), SellWindowResponse.class);
+    }
+
     // ── Earnings (×8) ─────────────────────────────────────────────────
 
     /**

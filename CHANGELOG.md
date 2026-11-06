@@ -5,6 +5,13 @@ All notable changes to the FlashAlpha Java SDK are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## 1.4.0 - 2026-11-06
+
+### Added
+- **sell-window** (`client.sellWindowTyped(symbol)`) for `GET /v1/strategies/sell-window/{symbol}`: should you sell options today? `sell`, `skip` or `unavailable` for four listed expiries on SPY, QQQ and IWM, with the trades to place on a sell (strikes, quotes, exit rule). More than 5 million backtests led to this endpoint. Live answers need Basic or higher through November 2026, and Growth or higher from December 1, 2026. Backtesting any past session needs Alpha or higher.
+- **`SellWindowResponse`** with typed windows, candidates and legs. It has its own shape, not the strategy decision envelope.
+- `docs/sell-window.md`, a full reference with the backtest, FAQ and links.
+
 ## 1.3.0 - 2026-08-25
 
 ### Added
