@@ -2124,4 +2124,15 @@ public class IntegrationTest {
         assertNull("garch.params.dof must be null for gaussian",
                 gaussian.garch.params.dof);
     }
+
+    // ── sell-window ───────────────────────────────────────────────────
+
+    @Test
+    public void testSellWindow() {
+        SellWindowResponse r = client.sellWindowTyped("SPY");
+        assertEquals("SPY", r.symbol);
+        assertNotNull(r.session);
+        assertEquals(4, r.windows.size());
+        assertNotNull(r.windows.get(0).action);
+    }
 }

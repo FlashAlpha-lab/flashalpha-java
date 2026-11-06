@@ -7,7 +7,7 @@
 
     <groupId>com.flashalpha</groupId>
     <artifactId>flashalpha</artifactId>
-    <version>1.3.0</version>
+    <version>1.4.0</version>
     <packaging>jar</packaging>
 
     <name>FlashAlpha Java SDK</name>
@@ -16,7 +16,8 @@
         (filter and rank by gamma exposure, VRP, greeks, and more), real-time gamma exposure
         (GEX), delta exposure (DEX), vanna exposure (VEX), charm exposure (CHEX), 0DTE
         analytics, volatility surface, implied volatility, BSM greeks, Kelly criterion
-        position sizing, stock quotes, option quotes, and more. Supports Java 11+.
+        position sizing, stock quotes, option quotes, the sell-window sell-or-skip call for
+        option sellers, and more. Supports Java 11+.
     </description>
     <url>https://flashalpha.com</url>
 
