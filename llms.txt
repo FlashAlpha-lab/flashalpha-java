@@ -74,7 +74,7 @@ https://flashalpha.com/docs/lab-api-overview#response-envelope
   conditioning and strategy scores. (Alpha+)
 - `GET /v1/stock/{symbol}/summary` — one-shot dashboard (price + vol +
   flow + exposure + macro). Authenticated = live; unauthenticated =
-  previous-day cached snapshot.
+  previous trading session's snapshot.
 - `GET /v1/pricing/greeks` — Black-Scholes theoretical + 1st/2nd/3rd
   order greeks + lambda + veta.
 - `POST /v1/screener` — live options screener (filter/rank symbols by
