@@ -2135,4 +2135,35 @@ public class IntegrationTest {
         assertEquals(4, r.windows.size());
         assertNotNull(r.windows.get(0).action);
     }
+
+    // ── expiry impact + strike dependency ─────────────────────────────
+
+    @Test
+    public void testExpiryImpact() {
+        ExpiryImpactResponse r = client.expiryImpactTyped("SPY", null, 3);
+        assertEquals("SPY", r.symbol);
+        assertEquals("expiry_removal_sensitivity", r.analysisType);
+        assertNotNull(r.selectedExpiry);
+        assertTrue(r.availableExpiries.contains(r.selectedExpiry));
+        assertNotNull(r.current.grossGexUsd);
+        assertNotNull(r.excludingExpiry.status);
+        assertTrue(r.impact.largestGrossReductions.size() <= 3);
+        assertFalse(r.strikes.isEmpty());
+        assertNotNull(r.dataAsOf);
+    }
+
+    @Test
+    public void testStrikeDependency() {
+        // A strike from the expiry-impact list is always an exact listed strike.
+        ExpiryImpactResponse ei = client.expiryImpactTyped("SPY");
+        double strike = ei.impact.largestGrossReductions.get(0).strike;
+
+        StrikeDependencyResponse r = client.strikeDependencyTyped("SPY", strike);
+        assertEquals("SPY", r.symbol);
+        assertEquals("strike_attribution", r.analysisType);
+        assertEquals(strike, r.strike, 0.0);
+        assertFalse(r.byExpiry.isEmpty());
+        assertNotNull(r.byExpiry.get(0).valuationCutoffAt);
+        assertNotNull(r.dataAsOf);
+    }
 }

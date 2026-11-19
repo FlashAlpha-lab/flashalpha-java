@@ -22,20 +22,20 @@ chain data — all from a single, dependency-light Java 11+ package.
 <dependency>
     <groupId>com.flashalpha</groupId>
     <artifactId>flashalpha</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
 </dependency>
 ```
 
 ### Gradle (Groovy DSL)
 
 ```groovy
-implementation 'com.flashalpha:flashalpha:1.4.0'
+implementation 'com.flashalpha:flashalpha:1.5.0'
 ```
 
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("com.flashalpha:flashalpha:1.4.0")
+implementation("com.flashalpha:flashalpha:1.5.0")
 ```
 
 ## Quick start
@@ -116,6 +116,35 @@ Cut the risk or earn more. Keep your trade size and the deepest drawdown falls 7
 **Read more:** [API docs](https://flashalpha.com/docs/lab-api-strategies-sell-window?utm_source=github&utm_medium=readme&utm_campaign=repo-flashalpha-java&utm_content=sell-window) | [trading guide](https://flashalpha.com/articles/complete-guide-trading-sell-window-spy-qqq-iwm?utm_source=github&utm_medium=readme&utm_campaign=repo-flashalpha-java&utm_content=sell-window) | [every backtested trade](https://flashalpha.com/articles/sell-window-backtest-every-trade-2018-2026?utm_source=github&utm_medium=readme&utm_campaign=repo-flashalpha-java&utm_content=sell-window) | [sell-window in depth](https://github.com/FlashAlpha-lab/flashalpha-java/blob/main/docs/sell-window.md) | [plans](https://flashalpha.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=repo-flashalpha-java&utm_content=sell-window) | [live forward test on Discord](https://discord.gg/UtH22J8df2)
 
 *Backtest on SPY, QQQ and IWM, January 2018 to October 2026, at halfway fills and $1 per contract. At one contract set per signal, following it made $945,541 on 20,883 trades; selling every day made $2,321,150 on 56,975. At 3.76 times the contracts, both fell $958,924 at their deepest, and the worst month was -$642,135 against -$307,241. Past results do not guarantee future returns, and short options can lose more than the premium collected. The skip call applies to new trades, so it cannot protect open positions from a sudden shock. This is data, not investment advice.*
+
+## Expiry impact and strike dependency (SPY, QQQ)
+
+Two Growth+ views of how much of the current gamma concentration rests on one expiry.
+
+- **Expiry impact** compares the current SPY or QQQ gamma distribution with the same
+  captured inputs after excluding one expiry. Spot, Greeks and open interest are held
+  fixed, so it measures how much of today's concentration depends on one maturity. It is
+  not a forecast of post-expiry prices, dealer hedging or the next session's chain.
+- **Strike dependency** attributes the gamma at one exact observed strike to its
+  expiries, and names the dominant expiry. It reports concentration at that strike, not
+  a support/resistance probability.
+
+```java
+FlashAlphaClient client = new FlashAlphaClient(System.getenv("FLASHALPHA_API_KEY"));
+
+// Exclude the nearest active expiry; keep 5 rows in each impact list.
+ExpiryImpactResponse ei = client.expiryImpactTyped("SPY", null, 5);
+System.out.println(ei.selectedExpiry + " removed_gross_share_pct=" + ei.impact.removedGrossSharePct);
+System.out.println("net_sign_changed=" + ei.impact.netSignChanged);
+
+// Attribute the gamma at the exact 670 strike to its expiries.
+StrikeDependencyResponse sd = client.strikeDependencyTyped("SPY", 670);
+System.out.println("dominant_expiry=" + sd.dominantExpiry + " (" + sd.dominantExpirySharePct + "%)");
+```
+
+`data_status` is `partial` in normal operation (the open-interest vintage is unknown),
+`stale` when an input predates the market-session freshness cutoff, and `unavailable`
+when no contract qualifies. `reasons` carries machine codes.
 
 ## Data provenance: `data_as_of`
 
@@ -262,6 +291,8 @@ All methods return `com.google.gson.JsonObject`.
 | `maxPain(symbol, expiration)` | Max pain for a single expiry | Basic+ |
 | `exposureSheet(symbol[, expiration, minOi])` | Unified per-strike sheet — GEX/DEX/VEX/CHEX + DAG, chain totals, Line-in-the-Sand inflection strike, gamma peaks, OPEX / triple-witching flags | Growth+ |
 | `exposureTermStructure(symbol)` | Net GEX/DEX/VEX/CHEX aggregated by DTE bucket and rolled up per expiry | Growth+ |
+| `expiryImpact(symbol[, expiry, limit])` | Gamma concentration with one expiry excluded (SPY/QQQ) | Growth+ |
+| `strikeDependency(symbol, strike)` | One exact strike's gamma attributed to its expiries (SPY/QQQ) | Growth+ |
 | `exposureBasket(symbols[, weights])` | Weighted cross-symbol exposure basket — aggregate net GEX/DEX/VEX/CHEX across up to 50 symbols | Growth+ |
 | `oiDiff(symbol[, topN])` | Day-over-day open-interest deltas, top-N changes by magnitude, call/put aggregate totals | Growth+ |
 

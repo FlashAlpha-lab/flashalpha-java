@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -82,6 +83,17 @@ public class FlashAlphaClient {
     /** URL-escape a single path segment (e.g. a ticker) — escapes / ? % etc. */
     private static String _seg(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
+    }
+
+    /**
+     * Strike as a plain, locale-independent decimal: 672.5 becomes {@code "672.5"} and 670
+     * becomes {@code "670"}. Never scientific notation and never rounded.
+     */
+    private static String _strike(double strike) {
+        if (!Double.isFinite(strike)) {
+            throw new IllegalArgumentException("strike must be a finite number, got " + strike);
+        }
+        return BigDecimal.valueOf(strike).stripTrailingZeros().toPlainString();
     }
 
     private JsonObject get(String path) {
@@ -1620,6 +1632,82 @@ public class FlashAlphaClient {
     /** Strongly-typed variant of {@link #exposureTermStructure(String)} → {@link ExposureTermStructureResponse}. */
     public ExposureTermStructureResponse exposureTermStructureTyped(String symbol) {
         return gson.fromJson(exposureTermStructure(symbol), ExposureTermStructureResponse.class);
+    }
+
+    /**
+     * Compares the current SPY or QQQ gamma distribution with the same captured inputs
+     * after excluding one expiry. Spot, Greeks and open interest are held fixed, so this
+     * measures how much of today's concentration depends on one maturity. It is not a
+     * forecast of post-expiry prices, dealer hedging or the next session's chain.
+     *
+     * <p>Excludes the nearest active eligible expiry and returns 5 rows in
+     * {@code impact.largest_gross_reductions} and
+     * {@code impact.strongest_remaining_concentrations}. Requires Growth or higher. Other
+     * symbols return 422 {@code unsupported_symbol}.
+     *
+     * @param symbol {@code SPY} or {@code QQQ}.
+     * @return the raw JSON answer. Use {@link #expiryImpactTyped(String)} for the typed response.
+     */
+    public JsonObject expiryImpact(String symbol) {
+        return expiryImpact(symbol, null, null);
+    }
+
+    /**
+     * Compares the current SPY or QQQ gamma distribution with the same captured inputs
+     * after excluding one expiry. Spot, Greeks and open interest are held fixed, so this
+     * measures how much of today's concentration depends on one maturity. It is not a
+     * forecast of post-expiry prices, dealer hedging or the next session's chain.
+     *
+     * <p>Requires Growth or higher. Other symbols return 422 {@code unsupported_symbol}.
+     *
+     * @param symbol {@code SPY} or {@code QQQ}.
+     * @param expiry {@code yyyy-MM-dd} (nullable). Defaults to the nearest active eligible
+     *               expiry and must be one of {@code available_expiries}.
+     * @param limit  1-20 (nullable, default 5). Sets the rows in
+     *               {@code impact.largest_gross_reductions} and
+     *               {@code impact.strongest_remaining_concentrations}; totals and
+     *               {@code strikes} always use the full eligible chain.
+     * @return the raw JSON answer. Use {@link #expiryImpactTyped(String, String, Integer)} for the typed response.
+     */
+    public JsonObject expiryImpact(String symbol, String expiry, Integer limit) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (expiry != null) params.put("expiry", expiry);
+        if (limit != null) params.put("limit", String.valueOf(limit));
+        return get("/v1/exposure/expiry-impact/" + _seg(symbol), params.isEmpty() ? null : params);
+    }
+
+    /** Strongly-typed variant of {@link #expiryImpact(String)} → {@link ExpiryImpactResponse}. */
+    public ExpiryImpactResponse expiryImpactTyped(String symbol) {
+        return expiryImpactTyped(symbol, null, null);
+    }
+
+    /** Strongly-typed variant of {@link #expiryImpact(String, String, Integer)} → {@link ExpiryImpactResponse}. */
+    public ExpiryImpactResponse expiryImpactTyped(String symbol, String expiry, Integer limit) {
+        return gson.fromJson(expiryImpact(symbol, expiry, limit), ExpiryImpactResponse.class);
+    }
+
+    /**
+     * Attributes the gamma at one exact observed SPY or QQQ strike to its expiries: does
+     * the level depend on a single maturity? It reports concentration at that strike, not
+     * a support/resistance probability.
+     *
+     * <p>Requires Growth or higher. Other symbols return 422 {@code unsupported_symbol}.
+     *
+     * @param symbol {@code SPY} or {@code QQQ}.
+     * @param strike Required. Must be an exact listed strike; the request is never snapped
+     *               to a nearby strike (404 {@code strike_not_found}). Sent as a plain
+     *               decimal, for example {@code 672.5}.
+     * @return the raw JSON answer. Use {@link #strikeDependencyTyped(String, double)} for the typed response.
+     */
+    public JsonObject strikeDependency(String symbol, double strike) {
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("strike", _strike(strike));
+        return get("/v1/exposure/strike-dependency/" + _seg(symbol), params);
+    }
+
+    /** Strongly-typed variant of {@link #strikeDependency(String, double)} → {@link StrikeDependencyResponse}. */
+    public StrikeDependencyResponse strikeDependencyTyped(String symbol, double strike) {
+        return gson.fromJson(strikeDependency(symbol, strike), StrikeDependencyResponse.class);
     }
 
     /**

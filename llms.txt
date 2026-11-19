@@ -68,6 +68,8 @@ https://flashalpha.com/docs/lab-api-overview#response-envelope
   (pin risk, hedging buckets, decay, vol context, flow, levels). (Growth+)
 - `GET /v1/exposure/narrative/{symbol}` — LLM-friendly verbal output.
   (Growth+)
+- `GET /v1/exposure/expiry-impact/{symbol}` (`expiryImpactTyped`): Compares the current SPY or QQQ gamma distribution with the same captured inputs after excluding one expiry. Requires Growth or higher.
+- `GET /v1/exposure/strike-dependency/{symbol}` (`strikeDependencyTyped`): Attributes the gamma at one exact observed SPY or QQQ strike to its expiries: does the level depend on a single maturity? Requires Growth or higher.
 - `GET /v1/maxpain/{symbol}` — max-pain strike, pain curve, dealer
   alignment, pin probability. (Growth+)
 - `GET /v1/vrp/{symbol}` — variance risk premium with regime
