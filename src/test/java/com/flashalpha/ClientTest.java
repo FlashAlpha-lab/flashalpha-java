@@ -8,6 +8,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+
 import static org.junit.Assert.*;
 
 /**
@@ -1149,5 +1153,197 @@ public class ClientTest {
         assertNull(r.spot);
         assertNull(r.legsIndicative);
         assertNull(r.windows.get(0).candidates);
+    }
+
+    // ── expiry impact + strike dependency ──────────────────────────────
+
+    private static String fixture(String name) throws Exception {
+        try (InputStream in = ClientTest.class.getResourceAsStream("/fixtures/" + name)) {
+            assertNotNull("missing fixture " + name, in);
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    @Test
+    public void testExpiryImpactTypedOmitsDefaultsAndBindsEveryLevel() throws Exception {
+        enqueue(200, fixture("expiry_impact_live.json"));
+        ExpiryImpactResponse r = client.expiryImpactTyped("SPY");
+        RecordedRequest req = server.takeRequest();
+        assertEquals("/v1/exposure/expiry-impact/SPY", req.getPath());
+
+        // shared metadata + envelope
+        assertEquals("SPY", r.symbol);
+        assertEquals(735.885, r.underlyingPrice, 1e-9);
+        assertEquals("captured_cached_gamma_current_spot", r.pricingBasis);
+        assertEquals("stale", r.dataStatus);
+        assertEquals("expiry_removal_sensitivity", r.analysisType);
+        assertEquals(Integer.valueOf(9891), r.eligibleContractCount);
+        assertEquals(Integer.valueOf(2099), r.rejectedContractCount);
+        assertEquals(50.0, r.observedMinStrike, 0.0);
+        assertEquals(1480.0, r.observedMaxStrike, 0.0);
+        assertNull(r.oiAsOf);
+        assertEquals("unknown", r.oiVintageStatus);
+        assertEquals("2026-11-18T21:15:02Z", r.greeksNewestAt);
+        assertEquals(4, r.reasons.size());
+        assertEquals("expiry_clock_unverified", r.reasons.get(0).code);
+        assertEquals(Integer.valueOf(600), r.reasons.get(0).contractCount);
+        assertNull(r.reasons.get(2).contractCount);
+        assertEquals("2026.09.30", r.endpointVersion);
+        assertEquals("fa4", r.dataAsOf.node);
+        assertEquals("2026-11-18T00:00:00Z", r.dataAsOf.oiFeed);
+
+        // selection
+        assertEquals("2026-11-19", r.selectedExpiry);
+        assertEquals("nearest_active", r.selectionSource);
+        assertEquals(3, r.availableExpiries.size());
+        assertEquals("2026-11-23", r.availableExpiries.get(2));
+
+        // totals
+        assertEquals(33170572651.203655, r.current.grossGexUsd, 1e-3);
+        assertEquals(Integer.valueOf(9891), r.current.contractCount);
+        assertNull(r.current.status);
+        assertEquals(-573935208.9391723, r.excludedExpiry.putGexUsd, 1e-6);
+        assertEquals("available", r.excludingExpiry.status);
+        assertEquals(Integer.valueOf(9738), r.excludingExpiry.contractCount);
+
+        // impact and its strike rows
+        assertEquals(4.374061987278384, r.impact.removedGrossSharePct, 1e-12);
+        assertEquals(-303030991.4205142, r.impact.netGexChangeUsd, 1e-6);
+        assertEquals("negative", r.impact.netSignBefore);
+        assertEquals(Boolean.FALSE, r.impact.netSignChanged);
+        GammaStrikeImpact top = r.impact.largestGrossReductions.get(0);
+        assertEquals(740.0, top.strike, 0.0);
+        assertEquals(124993987.37306339, top.excludedGrossGexUsd, 1e-6);
+        assertEquals(9.24725841038217, top.excludedShareAtStrikePct, 1e-12);
+        assertEquals(750.0, r.impact.strongestRemainingConcentrations.get(0).strike, 0.0);
+
+        // integer JSON values bind as doubles
+        assertEquals(0.0, r.strikes.get(0).excludedGrossGexUsd, 0.0);
+        assertEquals(-7524.7463097843965, r.strikes.get(0).remainingNetGexUsd, 1e-9);
+
+        // facts: free-form supporting values
+        assertEquals("expiry_gross_share", r.facts.get(0).code);
+        assertEquals("2026-11-19", r.facts.get(0).supportingValues.get("expiry").getAsString());
+        assertEquals(4.374061987278384, r.facts.get(0).supportingValues.get("gross_share_pct").getAsDouble(), 1e-12);
+        assertEquals(9738, r.facts.get(1).supportingValues.get("remaining_contract_count").getAsInt());
+    }
+
+    @Test
+    public void testExpiryImpactSendsExpiryAndLimit() throws Exception {
+        enqueue(200, fixture("expiry_impact_live.json"));
+        client.expiryImpact("SPY", "2026-11-20", 3);
+        assertEquals("/v1/exposure/expiry-impact/SPY?expiry=2026-11-20&limit=3", server.takeRequest().getPath());
+
+        enqueue(200, fixture("expiry_impact_live.json"));
+        client.expiryImpactTyped("QQQ", null, 20);
+        assertEquals("/v1/exposure/expiry-impact/QQQ?limit=20", server.takeRequest().getPath());
+    }
+
+    @Test
+    public void testStrikeDependencyTypedBindsEveryLevel() throws Exception {
+        enqueue(200, fixture("strike_dependency_live.json"));
+        StrikeDependencyResponse r = client.strikeDependencyTyped("SPY", 670);
+        assertEquals("/v1/exposure/strike-dependency/SPY?strike=670", server.takeRequest().getPath());
+
+        assertEquals(670.0, r.strike, 0.0);
+        assertEquals(-8.953165236416016, r.distanceFromSpotPct, 1e-12);
+        assertEquals(187959991.78647596, r.grossGexUsd, 1e-6);
+        assertEquals(-181746678.9477364, r.putGexUsd, 1e-6);
+        assertEquals(Integer.valueOf(48), r.contractCount);
+        assertEquals("2026-12-18", r.dominantExpiry);
+        assertEquals(22.973602773735948, r.dominantExpirySharePct, 1e-12);
+        assertEquals("strike_attribution", r.analysisType);
+        assertEquals("5eea47dec15e0c187d02cb26c72169df7e20d2d767b306db67ee9fd56323de86", r.snapshotId);
+        assertEquals("fa4", r.dataAsOf.node);
+
+        assertEquals(3, r.byExpiry.size());
+        GammaExpiryRow row = r.byExpiry.get(0);
+        assertEquals("2026-11-19", row.expiry);
+        assertEquals("2026-11-19T21:00:00Z", row.valuationCutoffAt);
+        assertEquals("2026-11-19T21:15:00Z", row.lastTradingAt);
+        assertEquals("scheduled_regular_session", row.lastTradingStatus);
+        assertNull(row.settlementAt);
+        assertEquals("unknown", row.settlementStatus);
+        assertEquals(Integer.valueOf(0), row.calendarDaysToExpiry);
+        assertEquals(0.10318767058863045, row.grossSharePct, 1e-15);
+        assertEquals(0.10318767058863045, row.shareOfStrikeGrossPct, 1e-15);
+        // inherited from GammaTotals
+        assertEquals(193951.53716304564, row.grossGexUsd, 1e-9);
+        assertEquals(0.0, row.callGexUsd, 0.0);
+        assertEquals(Integer.valueOf(1), row.contractCount);
+        assertNull(row.status);
+        assertEquals(Integer.valueOf(4), r.byExpiry.get(2).calendarDaysToExpiry);
+    }
+
+    @Test
+    public void testStrikeDependencySendsFractionalStrikeExactly() throws Exception {
+        enqueue(200, fixture("strike_dependency_live.json"));
+        client.strikeDependency("SPY", 672.5);
+        assertEquals("/v1/exposure/strike-dependency/SPY?strike=672.5", server.takeRequest().getPath());
+    }
+
+    @Test
+    public void testStrikeIsLocaleIndependentAndNeverScientific() throws Exception {
+        Locale saved = Locale.getDefault();
+        Locale.setDefault(Locale.GERMANY); // comma decimal separator
+        try {
+            enqueue(200, OK_JSON);
+            client.strikeDependency("SPY", 672.5);
+            assertEquals("/v1/exposure/strike-dependency/SPY?strike=672.5", server.takeRequest().getPath());
+        } finally {
+            Locale.setDefault(saved);
+        }
+
+        enqueue(200, OK_JSON);
+        client.strikeDependency("SPY", 12345678.5); // Double.toString gives 1.23456785E7
+        assertEquals("/v1/exposure/strike-dependency/SPY?strike=12345678.5", server.takeRequest().getPath());
+
+        enqueue(200, OK_JSON);
+        client.strikeDependency("SPY", 0.125);
+        assertEquals("/v1/exposure/strike-dependency/SPY?strike=0.125", server.takeRequest().getPath());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStrikeDependencyRejectsNonFiniteStrike() {
+        client.strikeDependency("SPY", Double.NaN);
+    }
+
+    @Test
+    public void testExpiryImpact403RaisesTierRestricted() {
+        enqueue(403, "{\"error\":\"tier_restricted\",\"message\":\"Requires Growth plan or higher.\",\"current_plan\":\"Basic\",\"required_plan\":\"Growth\"}");
+        try {
+            client.expiryImpactTyped("SPY");
+            fail("expected TierRestrictedException");
+        } catch (TierRestrictedException e) {
+            assertEquals(403, e.getStatusCode());
+            assertEquals("Growth", e.getRequiredPlan());
+            assertEquals("Basic", e.getCurrentPlan());
+        }
+    }
+
+    @Test
+    public void testStrikeDependency422SurfacesUnsupportedSymbol() throws Exception {
+        enqueue(422, fixture("error_unsupported_symbol.json"));
+        try {
+            client.strikeDependencyTyped("AAPL", 200);
+            fail("expected FlashAlphaException");
+        } catch (FlashAlphaException e) {
+            assertEquals(422, e.getStatusCode());
+            assertEquals("unsupported_symbol", e.getResponse().get("error").getAsString());
+            assertEquals("This operation currently supports standard SPY and QQQ options.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testStrikeDependency404StrikeNotFoundKeepsBody() throws Exception {
+        enqueue(404, fixture("error_strike_not_found.json"));
+        try {
+            client.strikeDependencyTyped("SPY", 671.3);
+            fail("expected NotFoundException");
+        } catch (NotFoundException e) {
+            assertEquals("strike_not_found", e.getResponse().get("error").getAsString());
+            assertEquals(671.3, e.getResponse().get("requested_strike").getAsDouble(), 0.0);
+        }
+        assertEquals("/v1/exposure/strike-dependency/SPY?strike=671.3", server.takeRequest().getPath());
     }
 }

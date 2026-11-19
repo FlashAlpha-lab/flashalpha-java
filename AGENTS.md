@@ -28,6 +28,8 @@ that touches **options dealer flow** in Java or another JVM language:
   (Growth+ — `narrative()`).
 - Black-Scholes theoretical pricing + 1st / 2nd / 3rd order greeks,
   implied volatility, Kelly criterion position sizing.
+- **Expiry impact** (`expiryImpactTyped()`, Growth+): compares the current SPY or QQQ gamma distribution with the same captured inputs after excluding one expiry.
+- **Strike dependency** (`strikeDependencyTyped()`, Growth+): attributes the gamma at one exact observed SPY or QQQ strike to its expiries.
 
 New in v1.1 (back-compatible — existing signatures untouched, new
 params arrive as additional overloads):
@@ -166,7 +168,7 @@ quoted for hours while its feed is perfectly healthy.
 <dependency>
     <groupId>com.flashalpha</groupId>
     <artifactId>flashalpha</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
 </dependency>
 ```
 
