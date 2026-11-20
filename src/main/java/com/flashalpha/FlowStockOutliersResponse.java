@@ -4,11 +4,11 @@ import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 /**
- * Typed response for {@code GET /v1/flow/stocks/outliers} (Alpha+, cached ~30s).
+ * Typed response for {@code GET /v1/flow/stocks/outliers} (Alpha+, refreshes about every 30s).
  */
 public final class FlowStockOutliersResponse extends FlashAlphaResponse {
 
-    /** When the cached snapshot was generated (ISO-8601 UTC). */
+    /** When the snapshot was generated (ISO-8601 UTC). */
     @SerializedName("generatedUtc")
     public String generatedUtc;
 

@@ -18,7 +18,7 @@ import java.util.List;
  * <p><b>Dual mode:</b> when the request is authenticated with a valid
  * API key the response is a live snapshot computed from the current
  * options chain; when no key is supplied the API instead serves the
- * previous-day cached snapshot — same shape, same fields, just stale.
+ * previous trading session's snapshot, with the same shape and fields.
  * Use {@link #marketOpen} and {@link #asOf} to tell which one you got.
  *
  * <p>About FlashAlpha: real-time options dealer-flow analytics. See
